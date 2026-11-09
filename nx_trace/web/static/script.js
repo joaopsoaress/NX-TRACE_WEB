@@ -1,6 +1,6 @@
 // ---------- Estado
 var lista = [], backups = [], RES = [], FOUND = [];
-var job = null, kind = null, scanBody = null, lastScan = null;
+var job = null, kind = null, scanBody = null, lastScan = null, tela = "nova", jobStatus = null;
 
 
 // ---------- Utilidades
@@ -14,6 +14,7 @@ function go(id){
   document.querySelectorAll("section").forEach(function(s){ s.classList.toggle("active", s.id === id); });
   document.querySelectorAll("nav button").forEach(function(b){ b.classList.toggle("active", b.dataset.go === id); });
   window.scrollTo(0,0);
+  tela = id; salvarEstado();
   if (id === "relatorio") montarRel();
   if (id === "endpoints") carregarEndpoints();
 }
@@ -24,6 +25,24 @@ function toast(msg){
 function tam(b){ return b > 1024 ? (b/1024).toFixed(1)+" KB" : b+" B"; }
 function authTxt(r){ return r.auth_required ? "Sim" : "Não"; }
 function log(t){ var l = $("log"); l.innerHTML += esc(t)+"<br>"; l.scrollTop = l.scrollHeight; }
+
+// Persistência no navegador
+function guardar(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+function ler(k){ try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }
+function salvarEstado(){
+  guardar("nx_state", {tela: tela, job: job ? {id: job.id, kind: kind} : null, scanBody: scanBody, lastScan: lastScan});
+}
+function salvarForm(){
+  guardar("nx_form", {url: $("url").value, met: $("met").value, hdr: $("hdr").value, disc: $("disc").checked});
+}
+function restaurarForm(){
+  var f = ler("nx_form"); if (!f) return;
+  $("url").value = f.url; $("met").value = f.met; $("hdr").value = f.hdr; $("disc").checked = !!f.disc;
+}
+["url", "met", "hdr", "disc"].forEach(function(id){
+  $(id).addEventListener("input", salvarForm);
+  $(id).addEventListener("change", salvarForm);
+});
 
 async function api(url, opt){
   var r = await fetch(url, opt);
@@ -115,15 +134,24 @@ async function iniciar(url, body, k){
 }
 async function tick(id){
   if (!job || job.id !== id) return;
+  var rest = job.restore; job.restore = false;
   var d;
   try { d = await api("/api/jobs/" + id + "?since=" + job.next); }
-  catch (e) { log("[erro] " + e.message); $("execSub").textContent = "Conexão com o servidor perdida."; return; }
+  catch (e) {
+    if (/não encontrada/.test(e.message)) { job = null; salvarEstado(); return; }
+    log("[erro] " + e.message); $("execSub").textContent = "Conexão com o servidor perdida."; return;
+  }
+  jobStatus = d.status;
   job.next = d.next;
   d.events.forEach(tratar);
   $("prog").style.width = (d.total ? d.done / d.total * 100 : 0) + "%";
   $("progTxt").textContent = d.done + " de " + d.total + (d.kind === "discover" ? " palavras" : " endpoints");
-  if (d.status === "running") { setTimeout(function(){ tick(id); }, 500); return; }
-  terminar(d);
+  if (d.status === "running") {
+    $("execSub").textContent = (d.kind === "discover" ? "Descobrindo endpoints em " : "Varredura em andamento em ") + d.target;
+    $("cancelar").disabled = false;
+    setTimeout(function(){ tick(id); }, 500); return;
+  }
+  terminar(d, rest);
 }
 function tratar(ev){
   if (ev.type === "log") { log("[" + ev.level + "] " + ev.msg); return; }
@@ -139,17 +167,18 @@ function tratar(ev){
   }
   $("execTbody").appendChild(tr);
 }
-function terminar(d){
+function terminar(d, rest){
   $("cancelar").disabled = true;
   if (d.status === "error") { $("execSub").textContent = "Falha: " + d.error; return; }
   var cancelado = d.status === "cancelled";
   if (d.kind === "discover") {
     if (cancelado) { $("execSub").textContent = "Descoberta cancelada."; return; }
-    montarRevisao(); go("revisao"); return;
+    montarRevisao(); if (!rest) go("revisao"); return;
   }
   $("execSub").textContent = cancelado ? "Varredura cancelada. Os resultados parciais foram mantidos." : "Varredura concluída.";
   $("verRel").disabled = false;
   lastScan = {id: d.id, target: d.target, started: d.started};
+  salvarEstado();
 }
 $("cancelar").addEventListener("click", function(){
   if (job) send("/api/jobs/" + job.id + "/cancel").catch(function(e){ toast(e.message); });
@@ -259,4 +288,20 @@ $("fileEp").addEventListener("change", async function(){
   this.value = "";
 });
 
-carregarEndpoints();
+// ---------- Restaurar o estado ao abrir ou recarregar a página
+async function restaurar(){
+  restaurarForm();
+  var s = ler("nx_state") || {};
+  scanBody = s.scanBody || null; lastScan = s.lastScan || null;
+  await carregarEndpoints();
+  if (s.job) {
+    job = {id: s.job.id, next: 0, restore: true}; kind = s.job.kind; RES = []; FOUND = [];
+    await tick(job.id);
+  }
+  if (!job) lastScan = null;
+  var t = s.tela || "nova";
+  if (job && kind === "discover" && jobStatus === "done" && t === "exec") t = "revisao";
+  if (!job && (t === "exec" || t === "revisao")) t = "nova";
+  go(t);
+}
+restaurar();

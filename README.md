@@ -1,231 +1,177 @@
 # NX-TRACE
 
-### Lightweight REST API Behavioral Analysis Scanner
+### Analisador comportamental leve de APIs REST
 
-NX-TRACE is a CLI-based tool designed for deterministic behavioral analysis of REST API endpoints in controlled environments.
+![Versão](https://img.shields.io/badge/vers%C3%A3o-1.0-blue)
+![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
+![Python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)
+![Flask](https://img.shields.io/badge/flask-interface%20web-000000?logo=flask&logoColor=white)
+![Interface](https://img.shields.io/badge/interface-CLI%20%2B%20Web-lightgrey)
+![Escopo](https://img.shields.io/badge/escopo-n%C3%A3o%20invasivo-success)
+![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
 
-It performs structured inspection of endpoint responses, focusing on authentication signals, latency profiling, structured JSON extraction, and wordlist-based endpoint discovery.
+O **NX-TRACE** é uma ferramenta para análise comportamental determinística de endpoints REST em ambientes controlados. Ele inspeciona as respostas HTTP de forma estruturada (latência, tamanho, sinais de autenticação e payloads JSON) e documenta o resultado em um relatório, com foco em **clareza, reprodutibilidade e escopo explícito**.
 
-The tool emphasizes clarity, reproducibility, and explicit scope boundaries.
+Projeto acadêmico da **FATEC José Crespo Gonzales** (Análise e Desenvolvimento de Sistemas, Sorocaba – SP).
 
----
-
-## Overview
-
-NX-TRACE provides:
-
-* Sequential endpoint scanning
-* HTTP response profiling
-* Authentication signal detection
-* Wordlist-based endpoint discovery
-* Structured JSON response parsing
-* Deterministic text-based reporting
-
-Scope: behavioral endpoint analysis only.
-Excludes exploitation, bypass attempts, and vulnerability attacks.
+> **Esta é a primeira versão do projeto e da documentação.** Algumas funcionalidades ainda estão em desenvolvimento (veja [Limitações e próximos passos](#limitações-e-próximos-passos)).
 
 ---
 
-## Architecture
+## Escopo e uso ético
 
-### Scanner (CLI Application)
+O NX-TRACE **observa e documenta**. Ele **não** faz:
 
-The scanner:
+- exploração de vulnerabilidades;
+- ataques de força bruta;
+- bypass ou contorno de autenticação;
+- fuzzing avançado;
+- inspeção de certificados HTTPS;
+- varredura externa não autorizada.
 
-* Reads endpoints from `endpoints.txt`
-* Sends HTTP requests to a defined target
-* Measures response time and size
-* Detects authentication indicators
-* Extracts structured JSON responses
-* Optionally performs endpoint discovery
-* Generates a structured report file
-
----
-
-### Local Testing Environment
-
-A local testing server is included to simulate predictable API behaviors for controlled experimentation.
-
-The server provides endpoints that return:
-
-* Public responses
-* Authentication-required responses
-* Forbidden access responses
-* Structured JSON data
-* Artificial latency
-
-This allows deterministic analysis without external targets.
+Use somente em sistemas seus ou para os quais você tenha **autorização explícita**. O ambiente de testes incluído existe justamente para que os experimentos não dependam de alvos externos.
 
 ---
 
-## Core Capabilities
+## Funcionalidades
 
-### Endpoint Profiling
-
-For each endpoint, NX-TRACE collects:
-
-* HTTP status code
-* Response time
-* Response size
-* Authentication indicators
-* JSON response body (when available)
-
-Authentication detection is based on:
-
-* `401` and `403` status codes
-* `WWW-Authenticate` headers
-* Common authentication-related keywords in response bodies
+- **Varredura sequencial** dos endpoints listados em `endpoints.txt`.
+- **Perfilamento de respostas HTTP:** código de status, tempo de resposta e tamanho.
+- **Detecção de sinais de autenticação** por três critérios independentes: status `401`/`403`, cabeçalho `WWW-Authenticate` e palavras-chave no corpo.
+- **Descoberta por wordlist**, com variações estruturais dos caminhos.
+- **Extração de JSON** com preservação integral do payload, inclusive aninhado.
+- **Backup automático** do `endpoints.txt` antes de qualquer alteração.
+- **Relatório estruturado** em `.txt` com métricas, indicadores de autenticação, JSON, erros, timeouts e estatísticas.
+- **Resiliência:** falhas de conexão e timeouts são registrados e a varredura continua.
+- **Ambiente local de testes** (`test_server.py`) com respostas públicas, autenticadas, proibidas, JSON e latência artificial.
 
 ---
 
-### Endpoint Discovery
+## Interfaces
 
-Includes wordlist-based endpoint discovery:
+| Interface | Como iniciar | Observações |
+|---|---|---|
+| **CLI** | `nx-trace` | Interativa, no terminal. Grava `report.txt` e `endpoints.txt` na pasta atual. |
+| **Web** | `python -m nx_trace.web.app` | Local, sem login, em `http://127.0.0.1:5000`. Grava em `data/`. |
 
-* Tests common API paths
-* Tries structural variations
-* Displays real-time discovery feedback
-* Updates `endpoints.txt`
-* Creates backups before modification
-
-Discovery remains dictionary-based and deterministic.
+As duas interfaces seguem as mesmas regras de análise. A versão web usa o módulo `nx_trace/core.py`, que contém a lógica sem `print` nem `input`.
 
 ---
 
-### JSON Response Analysis
+## Instalação
 
-When JSON data is returned:
-
-* The response is parsed and stored
-* Structured output is included in the report
-* Full JSON payload is preserved
-
----
-
-### Reporting
-
-After each scan, NX-TRACE generates `report.txt` containing:
-
-* Scan date and target
-* Per-endpoint metrics
-* Authentication indicators
-* Full JSON response data (when available)
-* Errors and timeouts
-* Summary statistics
-
----
-
-## Installation
-
-### Requirements
-
-* Python 3.6+
-* Dependencies listed in `requirements.txt`
-
-Install:
+**Requisitos:** Python 3.8 ou superior.
 
 ```bash
-pip install -r requirements.txt
+git clone <url-do-repositorio>
+cd NX-TRACE
+pip install -e .
 ```
+
+Isso instala as dependências (`requests` e `flask`) e o comando `nx-trace`.
 
 ---
 
-## Usage
+## Uso
 
-### Start the local test server
+### 1. Ambiente de testes
+
+Em um terminal, suba o servidor de testes (porta 8000):
 
 ```bash
 python test_server.py
 ```
 
-Default address:
+### 2. Interface web
 
-```
-http://localhost:8000
-```
-
-### Run the scanner
+Em outro terminal:
 
 ```bash
-python scanner.py
+python -m nx_trace.web.app
 ```
 
-Optional endpoint discovery can be enabled before execution.
+Abra `http://127.0.0.1:5000` e use o alvo `http://127.0.0.1:8000`.
+
+Fluxo das telas:
+
+1. **Nova varredura:** informe URL, método e headers; escolha a lista de endpoints (padrão ou upload `.txt`); opcionalmente ative a descoberta por wordlist; confirme o escopo autorizado.
+2. **Revisão da descoberta** (se ativada): marque os endpoints encontrados que deseja adicionar. O backup é criado antes de alterar a lista.
+3. **Execução:** acompanhe o progresso, a tabela e o registro em tempo real; é possível cancelar.
+4. **Relatório:** resumo, filtros, detalhe por endpoint (sinais de autenticação e JSON completo) e exportação em `.txt`.
+5. **Endpoints e backups:** edite a lista, envie um novo `.txt` e restaure backups.
+
+Ao recarregar a página, a interface mantém o que você preencheu (URL, método, headers e descoberta), a tela em que estava e a última varredura (inclusive uma em andamento). Isso fica no `localStorage` do navegador. Não são mantidos: a confirmação de escopo, que deve ser marcada a cada varredura, e os arquivos `.txt` selecionados para upload, que precisam ser escolhidos de novo.
+
+### 3. CLI
+
+```bash
+nx-trace
+```
+
+Siga as instruções no terminal. Ao final, o relatório é gravado em `report.txt`.
 
 ---
 
-## Configuration
-
-Configuration points:
-
-* `BASE_URL` in `scanner.py`
-* Wordlist entries inside `discover_endpoints()`
-* `HEADERS` for custom request configuration
-* `endpoints.txt` for manual endpoint management
-
----
-
-## Project Structure
+## Estrutura do projeto
 
 ```
 NX-TRACE/
-├── scanner.py
-├── test_server.py
-├── endpoints.txt
-├── report.txt
-├── README.md
-└── requirements.txt
+├── nx_trace/
+│   ├── scanner.py          # CLI
+│   ├── core.py             # lógica reutilizável (usada pela web)
+│   ├── endpoints.txt       # lista padrão de endpoints
+│   └── web/
+│       ├── app.py          # backend Flask (API JSON)
+│       └── static/         # index.html, styles.css, script.js
+├── test_server.py          # ambiente local de testes
+├── data/                   # criado pela interface web (não versionado)
+│   ├── endpoints.txt
+│   ├── backups/
+│   └── reports/
+└── pyproject.toml
 ```
 
----
-
-## Security Scope
-
-NX-TRACE is designed for behavioral endpoint analysis.
-
-It does not perform:
-
-* Exploitation
-* Brute-force attacks
-* Authentication bypass attempts
-* Advanced fuzzing
-* Vulnerability scanning heuristics
-* HTTPS certificate inspection
-* External unauthorized scanning
-
-Use only against systems you own or have explicit authorization to test.
+Para mudar a pasta de dados da web, defina a variável de ambiente `NX_TRACE_DATA`.
 
 ---
 
-## Roadmap
+## API da interface web
 
-Planned improvements may include:
+| Método | Rota | Função |
+|---|---|---|
+| `GET` / `PUT` | `/api/endpoints` | Lê ou grava a lista (com backup) |
+| `POST` | `/api/endpoints/restore` | Restaura um backup |
+| `POST` | `/api/scans` | Inicia uma varredura |
+| `POST` | `/api/discover` | Inicia a descoberta por wordlist |
+| `GET` | `/api/jobs/<id>?since=N` | Progresso e eventos novos |
+| `POST` | `/api/jobs/<id>/cancel` | Cancela a operação |
+| `GET` | `/api/jobs/<id>/report` | Baixa o `report.txt` |
 
-* Concurrent scanning
-* Token-based authentication support
-* JSON or HTML report export
-* Modular architecture
-* Extended discovery strategies
-* Structured logging
-* CI integration
+O servidor escuta apenas em `127.0.0.1` e exige a confirmação de escopo em toda varredura.
 
 ---
 
-## Changelog
+## Limitações e próximos passos
 
-### v1.6
+- Executa **uma operação por vez**.
+- Se o servidor for reiniciado, a varredura da tela é perdida (o `.txt` continua em `data/reports/`).
+- A tela de **histórico** de relatórios ainda não existe (os arquivos já ficam salvos em `data/reports/`).
+- Métodos suportados: `GET`, `HEAD` e `OPTIONS` (com `HEAD` não há corpo para analisar).
+- A detecção por palavra-chave é simples e pode gerar falsos positivos (por exemplo, "auth" dentro de "author").
+- Previstos para versões futuras: varredura concorrente, suporte a autenticação por token e exportação em JSON/HTML.
 
-Added CLI-based target configuration
+---
 
-### v1.5
+## Autores
 
-* Wordlist-based endpoint discovery
-* JSON response extraction
-* Enhanced report generation
-* Endpoints file backup system
+- João Pedro Soares da Rosa Oliveira
+- Pedro José Vanzella
+- Reynaldo José Pedroso Ramos Neto
 
-### v1.0
+FATEC José Crespo Gonzales – Análise e Desenvolvimento de Sistemas – Sorocaba, SP, 2026.
 
-* Initial release
-* Basic endpoint scanning
-* Authentication signal detection
+## Licença
+
+Distribuído sob a licença MIT. Veja o arquivo [LICENCE](LICENCE).
+
+A versão em inglês do README original está em [README.en.md](README.en.md).

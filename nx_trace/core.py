@@ -1,8 +1,3 @@
-"""NX-TRACE core: lógica de análise sem print/input, usada pela interface web.
-
-Mesmas regras do CLI (scanner.py): perfilamento HTTP, detecção de autenticação
-por status/header/palavra-chave e descoberta por wordlist. Só observa; não explora.
-"""
 import json
 import os
 import re

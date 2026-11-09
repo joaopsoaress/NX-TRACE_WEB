@@ -1,4 +1,4 @@
-"""NX-TRACE web: backend Flask local (127.0.0.1). Uso: python -m nx_trace.web.app"""
+"""NX-TRACE web: backend Flask local."""
 import os
 import sys
 import threading
