@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env/
+
+# Reports
+output/
+report.txt
+*.log
+
+# IDEs
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Dados da interface web
+data/

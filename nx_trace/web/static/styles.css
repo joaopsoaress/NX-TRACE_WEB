@@ -1,0 +1,367 @@
+/* Variáveis e base */
+:root {
+  --bg: #ececec; 
+  --panel: #fff; 
+  --line: #c8c8c8; 
+  --text: #222; 
+  --muted: #666;
+  --dark: #444; 
+  --soft: #f4f4f4; 
+  --focus: #222;
+}
+
+* {
+
+  box-sizing: border-box; 
+}
+
+body { 
+  margin: 0; 
+  font: 15px/1.45 system-ui, Arial, sans-serif; 
+  background: var(--bg); 
+  color: var(--text); }
+
+/* Banner e menu lateral */
+.banner { 
+  background: var(--dark); 
+  color: #fff; 
+  padding: 6px 16px; 
+  font-size: 13px; 
+}
+
+.layout { 
+  display: flex; 
+  min-height: calc(100vh - 31px); 
+}
+
+nav { 
+  width: 210px; 
+  background: var(--panel); 
+  border-right: 1px solid var(--line); 
+  padding: 16px 0; 
+  flex-shrink: 0; 
+}
+
+nav h1 { 
+  font-size: 18px; 
+  margin: 0 16px 16px; 
+}
+
+nav button { 
+  display: block; 
+  width: 100%; 
+  text-align: left; 
+  background: none; 
+  border: 0; 
+  border-left: 4px solid transparent; 
+  padding: 10px 16px; 
+  font: inherit; 
+  cursor: pointer; 
+  color: var(--text); 
+}
+
+nav button:hover {
+  background: var(--soft); 
+}
+
+nav button.active { 
+  border-left-color: var(--dark);
+  background: var(--soft); 
+  font-weight: 600; 
+}
+
+main { 
+  flex: 1; 
+  padding: 24px; 
+  max-width: 980px; 
+}
+
+/* Estrutura das telas */
+section { 
+  display: none; 
+}
+
+section.active { 
+  display: block; 
+}
+
+h2 { 
+  margin: 0 0 4px; 
+  font-size: 22px; 
+}
+
+.sub { 
+  color: var(--muted); 
+  margin: 0 0 20px; 
+}
+
+.box { 
+  background: var(--panel); 
+  border: 1px solid var(--line); 
+  padding: 16px; margin-bottom: 16px; 
+}
+
+.box h3 { 
+  margin: 0 0 12px; 
+  font-size: 16px; 
+}
+
+/* Formulários e botões */
+label { 
+  display: block; 
+  margin: 10px 0 4px; 
+  font-weight: 600; 
+  font-size: 14px; 
+}
+
+label.inline { 
+  display: inline-flex; 
+  gap: 6px; 
+  align-items: center;
+  font-weight: 400; 
+  margin: 4px 14px 4px 0; 
+}
+
+input[type=text], select, textarea { 
+  width: 100%; 
+  padding: 8px; 
+  border: 1px solid #999; 
+  background: #fff; 
+  font: inherit; 
+}
+
+textarea { 
+  font-family: Consolas, monospace; 
+  font-size: 13px; 
+  min-height: 70px; 
+}
+
+:focus-visible { 
+  outline: 2px solid var(--focus); 
+  outline-offset: 2px; 
+}
+
+.hint { 
+  color: var(--muted); 
+  font-size: 13px; 
+  margin: 4px 0 0; 
+}
+
+.row { 
+  display: flex; 
+  gap: 12px; 
+  flex-wrap: wrap; 
+}
+
+.row > div { 
+  flex: 1; 
+  min-width: 180px; 
+}
+
+button.btn { 
+  padding: 9px 16px; 
+  border: 1px solid var(--dark);
+  background: var(--dark); 
+  color: #fff; 
+  font: inherit; 
+  cursor: pointer; 
+}
+
+button.btn.sec { 
+  background: #fff; 
+  color: var(--dark); 
+}
+
+button.btn:disabled { 
+  background: #bbb; 
+  border-color: #bbb; 
+  cursor: not-allowed; 
+  color: #eee; 
+}
+
+.actions { 
+  display: flex; 
+  gap: 10px; 
+  margin-top: 16px; 
+  flex-wrap: wrap; 
+}
+
+/* Tabelas, tags e barra de progresso */
+table { 
+  width: 100%; 
+  border-collapse: collapse; 
+  background: #fff; 
+  font-size: 14px; 
+}
+
+th, td { 
+  text-align: left; 
+  padding: 8px 10px; 
+  border-bottom: 1px solid var(--line); 
+}
+
+th { 
+  background: var(--soft); 
+  font-weight: 600; 
+}
+
+tbody tr.click { 
+  cursor: pointer; 
+}
+
+tbody tr.click:hover, tbody tr.sel { 
+  background: var(--soft); 
+}
+
+.scroll { 
+  overflow-x: auto; 
+  border: 1px solid var(--line); 
+}
+
+.tag { 
+  display: inline-block; 
+  padding: 1px 7px; 
+  border: 1px solid #888; 
+  font-size: 12px; 
+  margin-right: 4px; 
+  background: #fff; 
+}
+
+.tag.on { 
+  background: var(--dark); 
+  color: #fff; 
+  border-color: var(--dark); 
+}
+
+.tag.off { 
+  color: #999; 
+  border-color: #ccc; 
+}
+
+.bar { 
+  height: 14px; 
+  background: #ddd; 
+  border: 1px solid #999; 
+}
+
+.bar div { 
+  height: 100%; 
+  width: 0; 
+  background: var(--dark); 
+  transition: width .3s; 
+}
+
+/* Cards, JSON e registro */
+.cards { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+  gap: 12px; 
+  margin-bottom: 16px; 
+}
+
+.card { 
+  background: #fff; 
+  border: 1px solid var(--line); 
+  padding: 12px; 
+}
+
+.card b { 
+  display: block; 
+  font-size: 22px; 
+}
+
+.card span { 
+  color: var(--muted); 
+  font-size: 13px; 
+}
+
+pre { 
+  background: #fff; 
+  border: 1px solid var(--line); 
+  padding: 10px; 
+  overflow: auto; 
+  font-size: 12.5px; 
+  margin: 8px 0 0; 
+  max-height: 260px; 
+}
+
+.log { 
+  background: #fff; 
+  border: 1px solid var(--line);
+  padding: 8px; 
+  height: 130px; 
+  overflow: auto; 
+  font: 12.5px Consolas, monospace; 
+}
+
+
+/* Toast, listas e responsivo */
+.toast { 
+  position: fixed; 
+  bottom: 20px; 
+  right: 20px; 
+  background: var(--dark); 
+  color: #fff; 
+  padding: 10px 16px; 
+  display: none; 
+  max-width: 340px; 
+}
+
+ul.plain { 
+  list-style: none; 
+  padding: 0; 
+  margin: 0; 
+}
+
+ul.plain li { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  padding: 6px 0; 
+  border-bottom: 1px solid var(--line); 
+  gap: 8px; 
+}
+
+ul.plain li:last-child { 
+  border-bottom: 0; 
+}
+
+.two { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; 
+  gap: 16px; 
+}
+
+@media (max-width: 760px) { 
+  .layout { 
+    flex-direction: column; 
+  }
+ 
+  nav { 
+    width: 100%; 
+    display: flex; 
+    overflow-x: auto; 
+    padding: 0; 
+    border-right: 0; 
+    border-bottom: 1px solid var(--line); 
+  } 
+  
+  nav h1 { display: none; } 
+  
+  nav button { 
+    white-space: nowrap; 
+    border-left: 0; 
+    border-bottom: 4px solid transparent; 
+  }
+  nav button.active { 
+    border-bottom-color: var(--dark); 
+  } 
+
+  .two { 
+    grid-template-columns: 1fr; 
+  }
+}
+
+/* ===== Painel de detalhe fixo ao rolar a tabela ===== */
+.two { align-items: start; }
+#detalhe { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }

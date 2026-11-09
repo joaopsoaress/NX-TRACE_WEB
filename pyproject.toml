@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nx-trace"
+version = "1.6.0"
+description = "Lightweight REST API Behavioral Analysis Scanner"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "custom"}
+authors = [
+    {name = "João P.Soares"}
+]
+dependencies = [
+    "requests",
+    "flask"
+]
+
+[project.scripts]
+nx-trace = "nx_trace.scanner:main"
