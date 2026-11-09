@@ -6,7 +6,7 @@
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 ![Python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/flask-interface%20web-000000?logo=flask&logoColor=white)
-![Interface](https://img.shields.io/badge/interface-CLI%20%2B%20Web-lightgrey)
+![Interface](https://img.shields.io/badge/interface-%20%2B%20Web-lightgrey)
 ![Escopo](https://img.shields.io/badge/escopo-n%C3%A3o%20invasivo-success)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
 
