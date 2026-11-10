@@ -51,14 +51,11 @@ Na versão web, as requisições partem dos **servidores da Vercel** (não do se
 
 ---
 
-## Interfaces
+## Interface
 
 | Interface | Como usar | Observações |
 |---|---|---|
-| **CLI** | `nx-trace` | Interativa, no terminal. Grava `report.txt` e `endpoints.txt` na pasta atual. Não mudou. |
-| **Web** | Deploy na Vercel | Sem login e sem banco de dados. Lista, backups e relatórios ficam no `localStorage` do navegador. |
-
-As duas interfaces seguem as mesmas regras de análise. A versão web usa o módulo `nx_trace/core.py`, que contém a lógica sem `print` nem `input`.
+| **Web** | Deploy na Vercel | Sem login. Lista, backups e relatórios ficam no `localStorage` do navegador. |
 
 ---
 
