@@ -136,5 +136,3 @@ FATEC José Crespo Gonzales – Análise e Desenvolvimento de Sistemas – Soroc
 ## Licença
 
 Distribuído sob a licença MIT. Veja o arquivo [LICENCE](LICENCE).
-
-A versão em inglês do README original está em [README.en.md](README.en.md).
