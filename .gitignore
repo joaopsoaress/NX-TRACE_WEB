@@ -22,3 +22,6 @@ report.txt
 
 # Dados da interface web
 data/
+
+# Vercel
+.vercel/

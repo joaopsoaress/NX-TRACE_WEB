@@ -362,6 +362,17 @@ ul.plain li:last-child {
   }
 }
 
-/* ===== Painel de detalhe fixo ao rolar a tabela ===== */
+/* Painel de detalhe fixo ao rolar a tabela */
 .two { align-items: start; }
 #detalhe { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+
+/* Utilitários (substituem estilos inline, por causa da CSP) */
+.w3 { flex: 3; }
+.w240 { max-width: 240px; }
+.mt12 { margin-top: 12px; }
+.row.end { align-items: end; }
+
+/* Histórico */
+ul.plain li .info { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+ul.plain li .info small { display: block; color: var(--muted); }
+ul.plain li .btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }

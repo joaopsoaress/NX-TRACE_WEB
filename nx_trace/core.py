@@ -1,11 +1,14 @@
+import ipaddress
 import json
-import os
 import re
-import shutil
+import socket
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from urllib.parse import urlsplit
 
 import requests
+import urllib3.util.connection as _u3conn
 
 DEFAULT_HEADERS = {"Content-Type": "application/json", "User-Agent": "NX-TRACE-Scanner/1.6.1"}
 METHODS = ("GET", "HEAD", "OPTIONS")
@@ -14,6 +17,10 @@ AUTH_KEYWORDS = ["login", "sign in", "authenticate", "authorization",
                  "access denied", "forbidden", "auth", "unauthorized"]
 MAX_UPLOAD = 100 * 1024  # 100 KB (RF01)
 MAX_BACKUPS = 20
+MAX_BODY = 1024 * 1024   # corpo lido por resposta (limite de memória e de payload da função)
+MAX_REDIRECTS = 3
+MAX_HEADERS = 30
+BLOCKED_MSG = "Destino não permitido: endereços locais, privados ou reservados são bloqueados."
 
 DEFAULT_WORDLIST = [
     "admin", "dashboard", "manager", "management", "api", "v1", "v2", "v3", "rest", "graphql",
@@ -30,7 +37,7 @@ DEFAULT_WORDLIST = [
 def normalize_target(url):
     url = (url or "").strip().rstrip("/")
     if not re.match(r"^https?://[^\s/]+(/\S*)?$", url):
-        raise ValueError("URL inválida. Use o formato http://host:porta")
+        raise ValueError("URL inválida. Use o formato https://host ou http://host:porta")
     return url
 
 
@@ -77,114 +84,184 @@ def parse_headers(text):
     return headers
 
 
+# ---------- Proteção de rede (SSRF) ----------
+# O serviço roda em servidores públicos e aceita alvos externos. Por isso, só
+# endereços IP públicos podem ser contatados. A checagem ocorre no momento da
+# conexão (inclusive em redirecionamentos), usando o IP já validado, o que
+# evita DNS rebinding.
+class BlockedTarget(OSError):
+    pass
+
+
+def _is_public(ip_str):
+    ip = ipaddress.ip_address(ip_str.split("%")[0])
+    mapped = getattr(ip, "ipv4_mapped", None)
+    if mapped is not None:
+        ip = mapped
+    return ip.is_global
+
+
+def resolve_public(host, port):
+    """Resolve o host e devolve só IPs públicos. Qualquer IP não público bloqueia o alvo."""
+    ips = []
+    for info in socket.getaddrinfo(host.strip("[]"), port, type=socket.SOCK_STREAM):
+        ip = info[4][0]
+        if not _is_public(ip):
+            raise BlockedTarget(BLOCKED_MSG)
+        if ip not in ips:
+            ips.append(ip)
+    return ips
+
+
+def assert_public_target(url):
+    """Pré-checagem com mensagem amigável. A barreira real é install_ssrf_guard()."""
+    parts = urlsplit(url)
+    host = parts.hostname
+    if not host:
+        raise ValueError("URL inválida. Use o formato https://host")
+    try:
+        port = parts.port or (443 if parts.scheme == "https" else 80)
+        resolve_public(host, port)
+    except BlockedTarget:
+        raise ValueError(BLOCKED_MSG)
+    except (socket.gaierror, UnicodeError):
+        raise ValueError(f"Não foi possível resolver o host “{host[:60]}”.")
+    except ValueError:
+        raise ValueError("URL inválida (porta incorreta).")
+
+
+_guard_installed = False
+
+
+def install_ssrf_guard():
+    """Faz toda conexão TCP do urllib3 passar por resolve_public(). Chamar uma vez na inicialização."""
+    global _guard_installed
+    if _guard_installed:
+        return
+    original = _u3conn.create_connection
+
+    def guarded(address, *args, **kwargs):
+        host, port = address
+        last = None
+        for ip in resolve_public(host, port):
+            try:
+                return original((ip, port), *args, **kwargs)
+            except OSError as e:
+                last = e
+        raise last or OSError("Nenhum endereço disponível.")
+
+    _u3conn.create_connection = guarded
+    _guard_installed = True
+
+
 # ---------- Perfilamento e descoberta ----------
+def _session():
+    s = requests.Session()
+    s.trust_env = False  # ignora proxies do ambiente
+    s.max_redirects = MAX_REDIRECTS
+    return s
+
+
+def _read_body(resp, deadline):
+    """Lê o corpo até MAX_BODY bytes e até o prazo total. Retorna (bytes, truncado)."""
+    chunks, size = [], 0
+    for chunk in resp.iter_content(65536):
+        chunks.append(chunk)
+        size += len(chunk)
+        if size > MAX_BODY:
+            return b"".join(chunks)[:MAX_BODY], True
+        if time.time() > deadline:
+            raise requests.exceptions.Timeout()
+    return b"".join(chunks), False
+
+
+def _decode(body, encoding):
+    try:
+        return body.decode(encoding or "utf-8", errors="replace")
+    except LookupError:
+        return body.decode("utf-8", errors="replace")
+
+
 def profile_endpoint(target, endpoint, headers=None, method="GET", timeout=10):
     r = {"endpoint": endpoint, "status_code": None, "response_time": None, "content_length": None,
+         "truncated": False,
          "auth_signals": {"status_code": False, "www_authenticate": False, "keyword": False},
          "auth_required": False, "json_data": None, "error": None}
     start = time.time()
     try:
-        resp = requests.request(method, target + endpoint, headers=headers or DEFAULT_HEADERS, timeout=timeout)
+        with _session() as s:
+            resp = s.request(method, target + endpoint, headers=headers or DEFAULT_HEADERS,
+                             timeout=timeout, stream=True)
+            body, r["truncated"] = _read_body(resp, start + timeout)
+            resp.close()
         r["response_time"] = round(time.time() - start, 3)
         r["status_code"] = resp.status_code
-        r["content_length"] = len(resp.content)
+        r["content_length"] = len(body)
+        text = _decode(body, resp.encoding)
         if "application/json" in resp.headers.get("Content-Type", ""):
             try:
-                r["json_data"] = resp.json()
+                if r["truncated"]:
+                    raise ValueError
+                r["json_data"] = json.loads(text)
             except ValueError:
                 r["json_data"] = {"error": "Failed to parse JSON"}
         sig = r["auth_signals"]
         sig["status_code"] = resp.status_code in AUTH_STATUS
         sig["www_authenticate"] = "WWW-Authenticate" in resp.headers
-        text = resp.text.lower()
-        sig["keyword"] = any(k in text for k in AUTH_KEYWORDS)
+        low = text.lower()
+        sig["keyword"] = any(k in low for k in AUTH_KEYWORDS)
         r["auth_required"] = any(sig.values())
     except requests.exceptions.Timeout:
         r["error"] = f"Timeout após {timeout} segundos"
-    except requests.exceptions.ConnectionError:
-        r["error"] = "Conexão recusada – o servidor está rodando?"
+    except requests.exceptions.SSLError:
+        r["error"] = "Falha de SSL/TLS: certificado inválido ou handshake recusado"
+    except requests.exceptions.ConnectionError as e:
+        msg = str(e)
+        if "Destino não permitido" in msg:
+            r["error"] = "Redirecionamento para destino não permitido (rede local/privada)"
+        elif any(k in msg for k in ("Name or service not known", "NameResolution", "getaddrinfo",
+                                    "Temporary failure in name resolution")):
+            r["error"] = "Não foi possível resolver o host"
+        else:
+            r["error"] = "Conexão recusada ou interrompida – o servidor está acessível?"
     except requests.exceptions.RequestException as e:
         r["error"] = f"Erro de requisição: {e}"
     return r
 
 
-def discover(target, words, headers, emit, should_stop):
-    """Descoberta por wordlist (mesmas 6 variações do CLI). Não toca em arquivos."""
-    found, seen = [], set()
-    for i, word in enumerate(words):
-        if should_stop():
-            break
-        emit("progress", done=i, total=len(words))
-        for ep in (f"/{word}", f"/api/{word}", f"/rest/{word}", f"/v1/{word}", f"/{word}/v1", f"/{word}/api"):
-            if should_stop() or ep in seen:
-                continue
-            try:
-                resp = requests.get(target + ep, headers=headers, timeout=2, allow_redirects=False)
-            except requests.exceptions.ConnectionError:
-                raise ConnectionError(f"Falha de conexão com {target}")
-            except requests.exceptions.RequestException:
-                continue
+def variants(word):
+    """As 6 variações de caminho testadas por palavra (iguais às do CLI)."""
+    return list(dict.fromkeys((f"/{word}", f"/api/{word}", f"/rest/{word}",
+                               f"/v1/{word}", f"/{word}/v1", f"/{word}/api")))
+
+
+def _probe_variant(target, ep, headers):
+    """Retorna (item|None, falha_de_conexao)."""
+    try:
+        with _session() as s:
+            resp = s.get(target + ep, headers=headers, timeout=2, allow_redirects=False, stream=True)
+            item = None
             if resp.status_code != 404:
-                seen.add(ep)
                 item = {"endpoint": ep, "status_code": resp.status_code,
                         "content_type": resp.headers.get("Content-Type", "unknown")}
-                found.append(item)
-                emit("found", item=item)
-    emit("progress", done=len(words), total=len(words))
-    return found
+            resp.close()
+            return item, False
+    except requests.exceptions.ConnectionError:
+        return None, True
+    except requests.exceptions.RequestException:
+        return None, False
 
 
-# ---------- Arquivo de endpoints com backup (RF08) ----------
-class EndpointStore:
-    def __init__(self, data_dir, seed=None):
-        self.file = os.path.join(data_dir, "endpoints.txt")
-        self.backup_dir = os.path.join(data_dir, "backups")
-        self.report_dir = os.path.join(data_dir, "reports")
-        os.makedirs(self.backup_dir, exist_ok=True)
-        os.makedirs(self.report_dir, exist_ok=True)
-        if not os.path.exists(self.file) and seed and os.path.exists(seed):
-            shutil.copyfile(seed, self.file)
-
-    def load(self):
-        if not os.path.exists(self.file):
-            return []
-        with open(self.file, encoding="utf-8") as f:
-            return parse_endpoints(f.read(), strict=False)
-
-    def save(self, endpoints):
-        """Grava a lista; cria backup (cópia) do arquivo atual antes. Retorna o nome do backup."""
-        endpoints = sorted(set(endpoints))
-        backup = None
-        if os.path.exists(self.file):
-            if sorted(self.load()) == endpoints:
-                return None
-            backup = self._backup()
-        with open(self.file, "w", encoding="utf-8") as f:
-            f.write("# NX-TRACE Endpoints File\n")
-            f.write(f"# Updated: {datetime.now():%Y-%m-%d %H:%M:%S}\n\n")
-            f.write("\n".join(endpoints) + "\n")
-        return backup
-
-    def _backup(self):
-        base = f"endpoints_backup_{datetime.now():%Y%m%d_%H%M%S}"
-        name, n = base + ".txt", 1
-        while os.path.exists(os.path.join(self.backup_dir, name)):
-            name, n = f"{base}_{n}.txt", n + 1
-        shutil.copyfile(self.file, os.path.join(self.backup_dir, name))
-        for old in self.backups()[MAX_BACKUPS:]:
-            os.remove(os.path.join(self.backup_dir, old))
-        return name
-
-    def backups(self):
-        names = [n for n in os.listdir(self.backup_dir) if re.match(r"^endpoints_backup_\d{8}_\d{6}(_\d+)?\.txt$", n)]
-        return sorted(names, reverse=True)
-
-    def restore(self, name):
-        if name not in self.backups():
-            raise ValueError("Backup não encontrado.")
-        with open(os.path.join(self.backup_dir, name), encoding="utf-8") as f:
-            eps = parse_endpoints(f.read(), strict=False)
-        return self.save(eps)
+def discover_word(target, word, headers):
+    """Testa as variações de UMA palavra (em paralelo) e devolve os endpoints que não deram 404.
+    Sem estado: o navegador chama uma vez por palavra. Levanta ConnectionError se nenhuma
+    variação conseguiu conectar ao alvo."""
+    eps = variants(word)
+    with ThreadPoolExecutor(max_workers=len(eps)) as pool:
+        out = list(pool.map(lambda ep: _probe_variant(target, ep, headers), eps))
+    if all(failed for _, failed in out):
+        raise ConnectionError(f"Falha de conexão com {target}")
+    return [item for item, _ in out if item]
 
 
 # ---------- Relatório (RF09) ----------
@@ -193,6 +270,14 @@ def summarize(results):
     return {"total": len(results), "successful": len(ok), "failed": len(results) - len(ok),
             "avg_time": round(sum(r["response_time"] for r in ok) / len(ok), 3) if ok else None,
             "auth_count": sum(1 for r in ok if r["auth_required"])}
+
+
+def parse_started(text):
+    """Data/hora local enviada pelo navegador ('AAAA-MM-DD HH:MM:SS'); usa agora se inválida."""
+    try:
+        return datetime.strptime(str(text), "%Y-%m-%d %H:%M:%S")
+    except ValueError:
+        return datetime.now()
 
 
 def build_report(target, started, results):
@@ -210,7 +295,7 @@ def build_report(target, started, results):
         else:
             sig = r["auth_signals"]
             L += [f"  Status Code: {r['status_code']}", f"  Response Time: {r['response_time']} seconds",
-                  f"  Content Length: {r['content_length']} bytes",
+                  f"  Content Length: {r['content_length']} bytes" + (" (truncated)" if r.get("truncated") else ""),
                   f"  Authentication Required: {'YES' if r['auth_required'] else 'NO'}",
                   f"  Auth Signals: status={sig['status_code']} www-authenticate={sig['www_authenticate']} keyword={sig['keyword']}"]
         if r["json_data"] is not None:  # payload JSON completo, inclusive aninhado (RNF05)

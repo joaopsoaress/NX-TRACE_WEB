@@ -19,3 +19,6 @@ dependencies = [
 
 [project.scripts]
 nx-trace = "nx_trace.scanner:main"
+
+[tool.setuptools]
+packages = ["nx_trace"]

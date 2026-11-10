@@ -9,7 +9,7 @@
 </head>
 
 <body>
-<div class="banner">Interface web local – analise apenas alvos que você tem autorização para testar.</div>
+<div class="banner"></div>
 <div class="layout">
   <nav>
     <h1>NX-TRACE</h1>
@@ -17,6 +17,7 @@
     <button data-go="revisao">Revisão da descoberta</button>
     <button data-go="exec">Execução</button>
     <button data-go="relatorio">Relatório</button>
+    <button data-go="historico">Histórico</button>
     <button data-go="endpoints">Endpoints e backups</button>
   </nav>
 
@@ -29,19 +30,21 @@
       <div class="box">
         <h3>Alvo</h3>
         <div class="row">
-          <div style="flex:3"><label for="url">URL base</label>
-            <input type="text" id="url" value="http://127.0.0.1:8000"></div>
+          <div class="w3"><label for="url">URL base</label>
+            <input type="text" id="url" placeholder="https://api.exemplo.com" autocomplete="off" spellcheck="false"></div>
           <div><label for="met">Método</label>
             <select id="met"><option>GET</option><option>HEAD</option><option>OPTIONS</option></select></div>
         </div>
+        <p class="hint">Alvos externos são permitidos. Endereços locais e de rede privada (localhost, 127.x, 10.x, 192.168.x…) são bloqueados, pois a varredura sai dos servidores da Vercel.</p>
         <label for="hdr">Headers (um por linha)</label>
         <textarea id="hdr">User-Agent: NX-TRACE-Scanner/1.6.1
 Content-Type: application/json</textarea>
+        <p class="hint">Os headers (inclusive tokens) passam pela função da Vercel até o alvo e ficam salvos neste navegador.</p>
       </div>
 
       <div class="box">
         <h3>Endpoints</h3>
-        <label class="inline"><input type="radio" name="orig" id="origPadrao" checked> Usar lista padrão (<span id="qtdPadrao">0</span> endpoints)</label>
+        <label class="inline"><input type="radio" name="orig" id="origPadrao" checked> Usar a lista salva (<span id="qtdPadrao">0</span> endpoints)</label>
         <label class="inline"><input type="radio" name="orig" id="origUp"> Enviar arquivo .txt</label>
         <p class="hint">Um endpoint por linha, começando com “/”. Apenas 1 arquivo .txt, até 100 KB.</p>
         <input type="file" accept=".txt" id="fileOrig" aria-label="Arquivo de endpoints">
@@ -50,8 +53,8 @@ Content-Type: application/json</textarea>
       <div class="box">
         <h3>Descoberta por wordlist (opcional)</h3>
         <label class="inline"><input type="checkbox" id="disc"> Descobrir novos endpoints antes da varredura</label>
-        <p class="hint">Os endpoints encontrados serão listados para você aprovar antes de alterar o endpoints.txt.</p>
-        <label class="inline"><input type="radio" name="wl" id="wlPadrao" checked> Wordlist padrão (52 palavras)</label>
+        <p class="hint">Os endpoints encontrados serão listados para você aprovar antes de alterar a lista salva.</p>
+        <label class="inline"><input type="radio" name="wl" id="wlPadrao" checked> Wordlist padrão (<span id="qtdWl">52</span> palavras)</label>
         <label class="inline"><input type="radio" name="wl" id="wlUp"> Enviar arquivo .txt</label>
         <input type="file" accept=".txt" id="fileWl" aria-label="Arquivo de wordlist">
       </div>
@@ -77,7 +80,7 @@ Content-Type: application/json</textarea>
         <thead><tr><th></th><th>Endpoint</th><th>Status</th><th>Tipo de conteúdo</th><th>Situação</th></tr></thead>
         <tbody id="descTbody"></tbody>
       </table></div>
-      <p class="hint">Antes de alterar o endpoints.txt, o sistema cria um backup automático.</p>
+      <p class="hint">Antes de alterar a lista, o sistema cria um backup automático.</p>
       <div class="actions">
         <button class="btn" id="aplicar">Adicionar selecionados e continuar</button>
         <button class="btn sec" id="pular">Continuar sem adicionar</button>
@@ -111,14 +114,14 @@ Content-Type: application/json</textarea>
       <h2>Relatório</h2>
       <p class="sub" id="relSub">Nenhuma varredura realizada ainda.</p>
       <div class="cards">
-        <div class="card"><b id="cTotal">7</b><span>Endpoints analisados</span></div>
-        <div class="card"><b id="cOk">6</b><span>Com resposta</span></div>
-        <div class="card"><b id="cErr">1</b><span>Com erro ou timeout</span></div>
-        <div class="card"><b id="cAvg">0,41 s</b><span>Tempo médio</span></div>
-        <div class="card"><b id="cAuth">2</b><span>Exigem autenticação</span></div>
+        <div class="card"><b id="cTotal">0</b><span>Endpoints analisados</span></div>
+        <div class="card"><b id="cOk">0</b><span>Com resposta</span></div>
+        <div class="card"><b id="cErr">0</b><span>Com erro ou timeout</span></div>
+        <div class="card"><b id="cAvg">–</b><span>Tempo médio</span></div>
+        <div class="card"><b id="cAuth">0</b><span>Exigem autenticação</span></div>
       </div>
-      <div class="row" style="align-items:end">
-        <div style="max-width:240px"><label for="filtro">Filtrar</label>
+      <div class="row end">
+        <div class="w240"><label for="filtro">Filtrar</label>
           <select id="filtro">
             <option value="todos">Todos</option>
             <option value="auth">Exigem autenticação</option>
@@ -127,7 +130,7 @@ Content-Type: application/json</textarea>
           </select></div>
         <div><button class="btn sec" id="exportar">Exportar relatório (.txt)</button></div>
       </div>
-      <div class="two" style="margin-top:12px">
+      <div class="two mt12">
         <div class="scroll"><table>
           <thead><tr><th>Endpoint</th><th>Status</th><th>Tempo</th><th>Auth</th></tr></thead>
           <tbody id="relTbody"></tbody>
@@ -136,6 +139,16 @@ Content-Type: application/json</textarea>
           <h3>Detalhe</h3>
           <p class="hint">Selecione um endpoint na tabela para ver os sinais de autenticação e o JSON completo.</p>
         </div>
+      </div>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section id="historico">
+      <h2>Histórico</h2>
+      <p class="sub">Relatórios das suas varreduras, guardados neste navegador (até 20). Limpar os dados do site apaga o histórico.</p>
+      <div class="box">
+        <ul class="plain" id="listaRel"></ul>
+        <div class="actions"><button class="btn sec" id="limparRel">Apagar todo o histórico</button></div>
       </div>
     </section>
 
@@ -148,18 +161,20 @@ Content-Type: application/json</textarea>
         <div class="box">
           <h3>Lista atual (<span id="qtd">0</span>)</h3>
           <div class="row">
-            <div style="flex:3"><input type="text" id="novoEp" placeholder="/novo/endpoint" aria-label="Novo endpoint"></div>
+            <div class="w3"><input type="text" id="novoEp" placeholder="/novo/endpoint" aria-label="Novo endpoint"></div>
             <div><button class="btn" id="addEp">Adicionar</button></div>
           </div>
           <p class="hint" id="erroEp"></p>
           <ul class="plain" id="listaEp"></ul>
           <div class="actions"><button class="btn sec" id="btnUp">Enviar novo arquivo .txt</button>
+            <button class="btn sec" id="btnDown">Baixar lista (.txt)</button>
+            <button class="btn sec" id="btnPadrao">Restaurar lista padrão</button>
             <input type="file" accept=".txt" id="fileEp" hidden></div>
         </div>
         <div class="box">
           <h3>Backups</h3>
           <ul class="plain" id="listaBk"></ul>
-          <p class="hint">Restaurar substitui a lista atual. Um novo backup é criado antes.</p>
+          <p class="hint">Restaurar substitui a lista atual. Um novo backup é criado antes. Guardamos os 20 mais recentes, neste navegador.</p>
         </div>
       </div>
     </section>
