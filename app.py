@@ -10,6 +10,7 @@ de nx_trace/core.py.
 import os
 import re
 import sys
+from urllib.parse import parse_qs
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PUBLIC = os.path.join(ROOT, "public")
@@ -26,6 +27,24 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 4 * 1024 * 1024  # limite de payload da Vercel: 4,5 MB
 PROBE_TIMEOUT = 8
 HEADER_NAME = re.compile(r"^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,64}$")
+
+
+class VercelApiPathMiddleware:
+    """Restores the API path after Vercel rewrites requests to the shared function."""
+    routes = {"defaults", "parse", "check", "probe", "discover", "report"}
+
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        if environ.get("PATH_INFO") == "/api/index":
+            route = parse_qs(environ.get("QUERY_STRING", "")).get("__route", [""])[0]
+            if route in self.routes:
+                environ["PATH_INFO"] = "/api/" + route
+        return self.wsgi_app(environ, start_response)
+
+
+app.wsgi_app = VercelApiPathMiddleware(app.wsgi_app)
 
 
 # ---------- Helpers ----------
