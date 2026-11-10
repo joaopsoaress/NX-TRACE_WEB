@@ -6,6 +6,7 @@
 ![Status](https://img.shields.io/badge/status-em%20desenvolvimento-yellow)
 ![Python](https://img.shields.io/badge/python-3.8%2B-3776AB?logo=python&logoColor=white)
 ![Flask](https://img.shields.io/badge/flask-interface%20web-000000?logo=flask&logoColor=white)
+![Vercel](https://img.shields.io/badge/deploy-vercel-000000?logo=vercel&logoColor=white)
 ![Escopo](https://img.shields.io/badge/escopo-n%C3%A3o%20invasivo-success)
 ![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-green)
 
@@ -25,89 +26,54 @@ O NX-TRACE **observa e documenta**. Ele **não** faz:
 - ataques de força bruta;
 - bypass ou contorno de autenticação;
 - fuzzing avançado;
-- inspeção de certificados HTTPS;
-- varredura externa não autorizada.
+- inspeção de certificados HTTPS.
 
-Use somente em sistemas seus ou para os quais você tenha **autorização explícita**. O ambiente de testes incluído existe justamente para que os experimentos não dependam de alvos externos.
+Alvos externos são permitidos, mas **somente sistemas seus ou para os quais você tenha autorização explícita**. A interface web exige a confirmação de escopo em toda operação.
+
+Na versão web, as requisições partem dos **servidores da Vercel** (não do seu computador). Por isso:
+
+- endereços locais e de rede privada (`localhost`, `127.x`, `10.x`, `172.16–31.x`, `192.168.x`, `169.254.x`, etc.) são **bloqueados**, inclusive quando alcançados por redirecionamento. Para testar um serviço local, publique-o ou use um túnel público;
+- o alvo verá requisições vindas de IPs da Vercel (se ele tiver firewall ou allowlist, isso importa).
 
 ---
 
 ## Funcionalidades
 
-- **Varredura sequencial** dos endpoints listados em `endpoints.txt`.
-- **Perfilamento de respostas HTTP:** código de status, tempo de resposta e tamanho.
+- **Varredura sequencial** dos endpoints da lista.
+- **Perfilamento de respostas HTTP:** código de status, tempo de resposta e tamanho (leitura limitada a 1 MB por resposta).
 - **Detecção de sinais de autenticação** por três critérios independentes: status `401`/`403`, cabeçalho `WWW-Authenticate` e palavras-chave no corpo.
 - **Descoberta por wordlist**, com variações estruturais dos caminhos.
 - **Extração de JSON** com preservação integral do payload, inclusive aninhado.
-- **Backup automático** do `endpoints.txt` antes de qualquer alteração.
+- **Backup automático** da lista de endpoints antes de qualquer alteração (os 20 mais recentes).
 - **Relatório estruturado** em `.txt` com métricas, indicadores de autenticação, JSON, erros, timeouts e estatísticas.
+- **Histórico de relatórios** (até 20) na versão web.
 - **Resiliência:** falhas de conexão e timeouts são registrados e a varredura continua.
-- **Ambiente local de testes** (`test_server.py`) com respostas públicas, autenticadas, proibidas, JSON e latência artificial.
 
 ---
 
 ## Interfaces
 
-| Interface | Como iniciar | Observações |
+| Interface | Como usar | Observações |
 |---|---|---|
-| **CLI** | `nx-trace` | Interativa, no terminal. Grava `report.txt` e `endpoints.txt` na pasta atual. |
-| **Web** | `python -m nx_trace.web.app` | Local, sem login, em `http://127.0.0.1:5000`. Grava em `data/`. |
+| **CLI** | `nx-trace` | Interativa, no terminal. Grava `report.txt` e `endpoints.txt` na pasta atual. Não mudou. |
+| **Web** | Deploy na Vercel | Sem login e sem banco de dados. Lista, backups e relatórios ficam no `localStorage` do navegador. |
 
 As duas interfaces seguem as mesmas regras de análise. A versão web usa o módulo `nx_trace/core.py`, que contém a lógica sem `print` nem `input`.
 
 ---
 
-## Instalação
+### Dados no navegador
 
-**Requisitos:** Python 3.8 ou superior.
+Tudo fica no `localStorage`, por navegador e por usuário. Não há conta nem banco, e o servidor não guarda nada.
 
-```bash
-git clone <url-do-repositorio>
-cd NX-TRACE
-pip install -e .
-```
+| Chave | Conteúdo |
+|---|---|
+| `nx_endpoints` | lista atual de endpoints (começa com a lista padrão de `nx_trace/endpoints.txt`) |
+| `nx_backups` | até 20 backups da lista |
+| `nx_reports` / `nx_report_<id>` | índice e conteúdo dos relatórios (até 20) |
+| `nx_form` / `nx_state` | campos do formulário (inclusive headers) e tela atual |
 
-Isso instala as dependências (`requests` e `flask`) e o comando `nx-trace`.
-
----
-
-## Uso
-
-### 1. Ambiente de testes
-
-Em um terminal, suba o servidor de testes (porta 8000):
-
-```bash
-python test_server.py
-```
-
-### 2. Interface web
-
-Em outro terminal:
-
-```bash
-python -m nx_trace.web.app
-```
-
-Abra `http://127.0.0.1:5000` e use o alvo `http://127.0.0.1:8000`.
-
-Fluxo das telas:
-
-1. **Nova varredura:** informe URL, método e headers; escolha a lista de endpoints (padrão ou upload `.txt`); opcionalmente ative a descoberta por wordlist; confirme o escopo autorizado.
-2. **Revisão da descoberta** (se ativada): marque os endpoints encontrados que deseja adicionar. O backup é criado antes de alterar a lista.
-3. **Execução:** acompanhe o progresso, a tabela e o registro em tempo real; é possível cancelar.
-4. **Relatório:** resumo, filtros, detalhe por endpoint (sinais de autenticação e JSON completo) e exportação em `.txt`.
-5. **Endpoints e backups:** edite a lista, envie um novo `.txt` e restaure backups.
-
-Ao recarregar a página, a interface mantém o que você preencheu (URL, método, headers e descoberta), a tela em que estava e a última varredura (inclusive uma em andamento). Isso fica no `localStorage` do navegador. Não são mantidos: a confirmação de escopo, que deve ser marcada a cada varredura, e os arquivos `.txt` selecionados para upload, que precisam ser escolhidos de novo.
-
-### 3. CLI
-
-```bash
-nx-trace
-```
-
-Siga as instruções no terminal. Ao final, o relatório é gravado em `report.txt`.
+Limpar os dados do site apaga o histórico. Se o navegador atingir o limite de armazenamento (cerca de 5 MB), os relatórios mais antigos são descartados.
 
 ---
 
@@ -115,46 +81,44 @@ Siga as instruções no terminal. Ao final, o relatório é gravado em `report.t
 
 ```
 NX-TRACE/
+├── api/
+│   └── index.py            # API Flask sem estado (função da Vercel)
+├── public/                 # interface web estática
+│   ├── index.html
+│   ├── script.js
+│   └── styles.css
 ├── nx_trace/
 │   ├── scanner.py          # CLI
 │   ├── core.py             # lógica reutilizável (usada pela web)
-│   ├── endpoints.txt       # lista padrão de endpoints
-│   └── web/
-│       ├── app.py          # backend Flask (API JSON)
-│       └── static/         # index.html, styles.css, script.js
-├── test_server.py          # ambiente local de testes
-├── data/                   # criado pela interface web (não versionado)
-│   ├── endpoints.txt
-│   ├── backups/
-│   └── reports/
+│   └── endpoints.txt       # lista padrão de endpoints
+├── requirements.txt        # dependências da função na Vercel
+├── vercel.json             # rotas, duração máxima e cabeçalhos de segurança
+├── .python-version
 └── pyproject.toml
 ```
-
-Para mudar a pasta de dados da web, defina a variável de ambiente `NX_TRACE_DATA`.
 
 ---
 
 ## API da interface web
 
+Todas as rotas são `POST` com JSON, exceto `defaults`. As que tocam o alvo exigem `scope_confirmed: true`.
+
 | Método | Rota | Função |
 |---|---|---|
-| `GET` / `PUT` | `/api/endpoints` | Lê ou grava a lista (com backup) |
-| `POST` | `/api/endpoints/restore` | Restaura um backup |
-| `POST` | `/api/scans` | Inicia uma varredura |
-| `POST` | `/api/discover` | Inicia a descoberta por wordlist |
-| `GET` | `/api/jobs/<id>?since=N` | Progresso e eventos novos |
-| `POST` | `/api/jobs/<id>/cancel` | Cancela a operação |
-| `GET` | `/api/jobs/<id>/report` | Baixa o `report.txt` |
-
-O servidor escuta apenas em `127.0.0.1` e exige a confirmação de escopo em toda varredura.
+| `GET` | `/api/defaults` | Lista de endpoints e wordlist padrão |
+| `POST` | `/api/parse` | Valida o texto de um `.txt` (endpoints ou wordlist) |
+| `POST` | `/api/check` | Valida URL, escopo, alvo público, método e headers |
+| `POST` | `/api/probe` | Perfila **um** endpoint |
+| `POST` | `/api/discover` | Testa as variações de **uma** palavra da wordlist |
+| `POST` | `/api/report` | Monta o relatório `.txt` a partir dos resultados |
 
 ---
 
 ## Limitações e próximos passos
 
-- Executa **uma operação por vez**.
-- Se o servidor for reiniciado, a varredura da tela é perdida (o `.txt` continua em `data/reports/`).
-- A tela de **histórico** de relatórios ainda não existe (os arquivos já ficam salvos em `data/reports/`).
+- Recarregar a página durante uma varredura a interrompe (o que já foi concluído não é guardado até o fim ou o cancelamento).
+- Cada requisição ao alvo tem timeout de 8 s e a leitura do corpo é limitada a 1 MB; a função da Vercel tem duração máxima de 60 s.
+- Os tempos de resposta incluem o trajeto entre a Vercel e o alvo, então diferem dos medidos na sua máquina.
 - Métodos suportados: `GET`, `HEAD` e `OPTIONS` (com `HEAD` não há corpo para analisar).
 - A detecção por palavra-chave é simples e pode gerar falsos positivos (por exemplo, "auth" dentro de "author").
 - Previstos para versões futuras: varredura concorrente, suporte a autenticação por token e exportação em JSON/HTML.
