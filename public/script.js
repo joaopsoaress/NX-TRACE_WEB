@@ -205,6 +205,12 @@ document.querySelectorAll("nav button").forEach(function(b){
   b.addEventListener("click", function(){ go(b.dataset.go); });
 });
 
+window.addEventListener("beforeunload", function(e){
+  if (!run) return;
+  e.preventDefault();
+  e.returnValue = "";
+});
+
 
 // ---------- 1. Nova varredura & Controles reativos (H6, H8, H9)
 function limparErroNova(){
@@ -349,8 +355,24 @@ function resultadoErro(ep, msg){
 function fatal(e){ return e.status >= 400 && e.status < 500; }
 
 $("cancelar").addEventListener("click", function(){
-  if (run) { run.cancel = true; run.ctrl.abort(); }
-  $("cancelar").disabled = true;
+  if (run) $("cancelDialog").showModal();
+});
+$("fecharCancelamento").addEventListener("click", function(){
+  $("cancelDialog").close();
+});
+$("cancelDialog").addEventListener("click", function(e){
+  if (e.target === this) this.close();
+});
+$("continuarVarredura").addEventListener("click", function(){
+  $("cancelDialog").close();
+});
+$("confirmarCancelamento").addEventListener("click", function(){
+  $("cancelDialog").close();
+  if (run) {
+    run.cancel = true;
+    run.ctrl.abort();
+    $("cancelar").disabled = true;
+  }
 });
 $("verRel").addEventListener("click", function(){ go("relatorio"); });
 
