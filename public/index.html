@@ -15,7 +15,6 @@
   </div>
   <div class="banner-right">
     <span class="pill">SCANNER v1.6.1</span>
-    <span class="banner-note">Sem exploração · Sem força bruta</span>
   </div>
 </header>
 
@@ -412,6 +411,18 @@ Content-Type: application/json</textarea>
 </div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<dialog class="confirm-dialog" id="cancelDialog" aria-labelledby="cancelDialogTitle" aria-describedby="cancelDialogDescription">
+  <div class="dialog-header">
+    <h2 id="cancelDialogTitle">Cancelar varredura?</h2>
+    <button class="dialog-close" id="fecharCancelamento" type="button" aria-label="Fechar confirmação">&times;</button>
+  </div>
+  <p id="cancelDialogDescription">A operação será interrompida. Os resultados já capturados serão mantidos, mas a varredura não poderá ser retomada.</p>
+  <div class="dialog-actions">
+    <button class="btn sec" id="continuarVarredura" type="button">Continuar varredura</button>
+    <button class="btn danger" id="confirmarCancelamento" type="button">Cancelar varredura</button>
+  </div>
+</dialog>
 
 <script src="script.js"></script>
 </body>
