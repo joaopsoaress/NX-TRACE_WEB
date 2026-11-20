@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NX-TRACE</title>
+<title>NX-TRACE — Observabilidade Passiva de Endpoints</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -15,7 +15,7 @@
   </div>
   <div class="banner-right">
     <span class="pill">SCANNER v1.6.1</span>
-    <span class="banner-note">Sem exploração</span>
+    <span class="banner-note">Sem exploração · Sem força bruta</span>
   </div>
 </header>
 
@@ -66,7 +66,7 @@
     </div>
 
     <div class="nav-footer">
-      <p>Saída via edge Vercel. Dados e relatórios armazenados localmente no navegador.</p>
+      <p>Saída via proxy serverless de análise. Listas e relatórios ficam armazenados localmente neste navegador.</p>
     </div>
   </nav>
 
@@ -79,101 +79,130 @@
         <p class="sub">Defina o alvo e as opções. A ferramenta apenas observa o comportamento HTTP dos endpoints.</p>
       </div>
 
-      <div class="box">
-        <div class="box-head">
-          <h3>Alvo e Cabeçalhos</h3>
-          <span class="badge">HTTP Probe</span>
-        </div>
-        <div class="row">
-          <div class="w3">
-            <label for="url">URL base</label>
-            <input type="text" id="url" placeholder="https://api.exemplo.com" autocomplete="off" spellcheck="false">
-          </div>
-          <div>
-            <label for="met">Método</label>
-            <select id="met">
-              <option>GET</option>
-              <option>HEAD</option>
-              <option>OPTIONS</option>
-            </select>
-          </div>
-        </div>
-        <p class="hint">Alvos externos são permitidos. Endereços locais e de rede privada (<code>localhost</code>, <code>127.x</code>, <code>10.x</code>, <code>192.168.x</code>…) são bloqueados automaticamente.</p>
+      <div class="scan-grid">
+        <div class="scan-col">
+          <div class="box">
+            <div class="box-head">
+              <h3>Alvo e Cabeçalhos</h3>
+              <span class="badge">HTTP Probe</span>
+            </div>
+            <div class="row">
+              <div class="w3">
+                <label for="url">URL base</label>
+                <input type="text" id="url" placeholder="https://api.exemplo.com" autocomplete="off" spellcheck="false">
+              </div>
+              <div>
+                <label for="met">Método HTTP</label>
+                <select id="met">
+                  <option>GET</option>
+                  <option>HEAD</option>
+                  <option>OPTIONS</option>
+                </select>
+              </div>
+            </div>
+            <p class="hint">Alvos externos públicos são permitidos. Endereços locais e de rede privada (<code>localhost</code>, <code>127.x</code>, <code>10.x</code>, <code>192.168.x</code>…) são bloqueados automaticamente pelo servidor de origem da varredura.</p>
 
-        <label for="hdr">Headers (um por linha)</label>
-        <textarea id="hdr" spellcheck="false">User-Agent: NX-TRACE-Scanner/1.6.1
+            <label for="hdr">Headers HTTP (um por linha)</label>
+            <textarea id="hdr" class="hdr-area" spellcheck="false">User-Agent: NX-TRACE-Scanner/1.6.1
 Content-Type: application/json</textarea>
-        <p class="hint">Os headers (inclusive tokens de leitura) trafegam pela função serverless até o alvo e ficam salvos apenas neste navegador.</p>
-      </div>
+            <p class="hint">Os headers (inclusive tokens de leitura) trafegam pelo proxy serverless até o alvo e ficam salvos apenas neste navegador.</p>
+          </div>
 
-      <div class="two">
-        <div class="box">
-          <div class="box-head">
-            <h3>Endpoints</h3>
-            <span class="badge">Rotas</span>
-          </div>
-          <div class="option-stack">
-            <label class="inline option-card">
-              <input type="radio" name="orig" id="origPadrao" checked>
-              <span>Usar a lista salva (<strong><span id="qtdPadrao">0</span></strong> endpoints)</span>
+          <div class="box scope-box">
+            <div class="box-head">
+              <h3>Autorização e Execução</h3>
+              <span class="badge">Obrigatório</span>
+            </div>
+            <label class="inline scope-label">
+              <input type="checkbox" id="escopo">
+              <span>Confirmo que sou responsável por este alvo ou tenho autorização explícita para analisá-lo.</span>
             </label>
-            <label class="inline option-card">
-              <input type="radio" name="orig" id="origUp">
-              <span>Enviar arquivo <code>.txt</code> personalizado</span>
-            </label>
+            <p class="hint">O NX-TRACE não explora falhas, não executa força bruta e não tenta contornar mecanismos de autenticação.</p>
+
+            <p class="alert-msg" id="erroNova" role="alert"></p>
+            <div class="actions align-center">
+              <button class="btn primary-glow" id="iniciar" disabled>Iniciar varredura</button>
+              <span class="hint m0" id="hintEscopo">Marque a confirmação de autorização acima para habilitar.</span>
+            </div>
           </div>
-          <p class="hint">Um endpoint por linha, começando com “/”. Apenas 1 arquivo <code>.txt</code> de até 100 KB.</p>
-          <input type="file" accept=".txt" id="fileOrig" aria-label="Arquivo de endpoints">
         </div>
 
-        <div class="box">
-          <div class="box-head">
-            <h3>Descoberta por wordlist</h3>
-            <span class="badge optional">Opcional</span>
+        <div class="scan-col">
+          <div class="box">
+            <div class="box-head">
+              <h3>Endpoints para análise</h3>
+              <span class="badge">Rotas</span>
+            </div>
+            <div class="option-stack">
+              <label class="inline option-card">
+                <input type="radio" name="orig" id="origPadrao" checked>
+                <span>Usar a lista salva (<strong><span id="qtdPadrao">0</span></strong> endpoints)</span>
+              </label>
+              <label class="inline option-card">
+                <input type="radio" name="orig" id="origUp">
+                <span>Importar arquivo <code>.txt</code> personalizado</span>
+              </label>
+            </div>
+            <div id="wrapFileOrig" class="file-zone hidden">
+              <input type="file" accept=".txt" id="fileOrig" aria-label="Arquivo de endpoints">
+              <p class="hint">Um endpoint por linha, começando com “/”. Apenas 1 arquivo <code>.txt</code> de até 100 KB.</p>
+            </div>
           </div>
-          <label class="inline toggle-card">
-            <input type="checkbox" id="disc">
-            <span>Descobrir novos endpoints antes da varredura</span>
-          </label>
-          <p class="hint">Os caminhos encontrados serão listados para sua aprovação antes de alterar a lista salva.</p>
-          <div class="option-stack mt12">
-            <label class="inline option-card">
-              <input type="radio" name="wl" id="wlPadrao" checked>
-              <span>Wordlist padrão (<strong><span id="qtdWl">52</span></strong> palavras)</span>
+
+          <div class="box">
+            <div class="box-head">
+              <h3>Descoberta por wordlist</h3>
+              <span class="badge optional">Opcional</span>
+            </div>
+            <label class="inline toggle-card">
+              <input type="checkbox" id="disc">
+              <span>Descobrir novos endpoints antes da varredura</span>
             </label>
-            <label class="inline option-card">
-              <input type="radio" name="wl" id="wlUp">
-              <span>Enviar wordlist <code>.txt</code></span>
-            </label>
+            <p class="hint">Cada termo é testado em 6 variações comuns de caminho (ex.: <code>/termo</code>, <code>/termo/</code>, <code>/api/termo</code>, <code>/v1/termo</code>) e listado para sua aprovação antes de alterar a lista salva.</p>
+
+            <div id="wlControls" class="option-stack mt12 is-disabled">
+              <div class="option-card option-card-split">
+                <label class="inline m0 flex1">
+                  <input type="radio" name="wl" id="wlPadrao" checked disabled>
+                  <span>Wordlist padrão (<strong><span id="qtdWl">52</span></strong> palavras)</span>
+                </label>
+                <button type="button" class="btn sec btn-xs" id="btnVerWl" disabled>Ver palavras</button>
+              </div>
+
+              <div id="boxWlPreview" class="wl-preview hidden" aria-live="polite">
+                <div class="wl-chips" id="wlListPreview"></div>
+              </div>
+
+              <label class="inline option-card">
+                <input type="radio" name="wl" id="wlUp" disabled>
+                <span>Importar wordlist <code>.txt</code> personalizada</span>
+              </label>
+            </div>
+            <div id="wrapFileWl" class="file-zone hidden">
+              <input type="file" accept=".txt" id="fileWl" aria-label="Arquivo de wordlist" disabled>
+              <p class="hint">Uma palavra por linha, sem espaços. Apenas 1 arquivo <code>.txt</code> de até 100 KB.</p>
+            </div>
           </div>
-          <input type="file" accept=".txt" id="fileWl" aria-label="Arquivo de wordlist">
         </div>
-      </div>
-
-      <div class="box scope-box">
-        <label class="inline scope-label">
-          <input type="checkbox" id="escopo">
-          <span>Confirmo que sou responsável por este alvo ou tenho autorização explícita para analisá-lo.</span>
-        </label>
-        <p class="hint">O NX-TRACE não explora falhas, não executa força bruta e não tenta contornar mecanismos de autenticação.</p>
-      </div>
-
-      <p class="alert-msg" id="erroNova" role="alert"></p>
-      <div class="actions">
-        <button class="btn primary-glow" id="iniciar" disabled>Iniciar varredura</button>
       </div>
     </section>
 
     <!-- 2. REVISÃO -->
     <section id="revisao">
-      <div class="section-head">
-        <span class="eyebrow">02 / TRIAGEM DE DESCOBERTA</span>
-        <h2>Revisão da descoberta</h2>
-        <p class="sub" id="revSub">Marque os endpoints que quer adicionar à lista.</p>
+      <div class="section-head section-head-row">
+        <div>
+          <span class="eyebrow">02 / TRIAGEM DE DESCOBERTA</span>
+          <h2>Revisão da descoberta</h2>
+          <p class="sub" id="revSub">Marque os endpoints que quer adicionar à lista.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn sec" id="pular">Continuar sem adicionar</button>
+          <button class="btn" id="aplicar">Adicionar selecionados e continuar</button>
+        </div>
       </div>
 
       <div class="box">
-        <div class="scroll">
+        <div class="scroll tall-scroll">
           <table>
             <thead>
               <tr>
@@ -189,22 +218,23 @@ Content-Type: application/json</textarea>
         </div>
         <p class="hint mt12">Antes de alterar a lista permanente, o sistema cria um backup automático da versão anterior.</p>
       </div>
-
-      <div class="actions">
-        <button class="btn" id="aplicar">Adicionar selecionados e continuar</button>
-        <button class="btn sec" id="pular">Continuar sem adicionar</button>
-      </div>
     </section>
 
     <!-- 3. EXECUÇÃO -->
     <section id="exec">
-      <div class="section-head">
-        <span class="eyebrow">03 / TELEMETRIA EM TEMPO REAL</span>
-        <h2>Execução</h2>
-        <p class="sub" id="execSub">Nenhuma varredura em andamento. Inicie uma em “Nova varredura”.</p>
+      <div class="section-head section-head-row">
+        <div>
+          <span class="eyebrow">03 / TELEMETRIA EM TEMPO REAL</span>
+          <h2>Execução</h2>
+          <p class="sub" id="execSub">Nenhuma varredura em andamento. Inicie uma em “Nova varredura”.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn danger" id="cancelar" disabled>Cancelar varredura</button>
+          <button class="btn" id="verRel" disabled>Ver relatório completo</button>
+        </div>
       </div>
 
-      <div class="box">
+      <div class="box prog-box">
         <div class="prog-header">
           <span class="prog-label">Progresso da operação</span>
           <span class="hint mono" id="progTxt">0 de 0</span>
@@ -212,53 +242,59 @@ Content-Type: application/json</textarea>
         <div class="bar" role="progressbar" aria-label="Progresso"><div id="prog"></div></div>
       </div>
 
-      <div class="box">
-        <div class="box-head">
-          <h3>Respostas capturadas</h3>
-          <span class="badge">Live Stream</span>
+      <div class="exec-grid">
+        <div class="box exec-panel">
+          <div class="box-head">
+            <h3>Respostas capturadas</h3>
+            <span class="badge">Live Stream</span>
+          </div>
+          <div class="scroll exec-scroll">
+            <table>
+              <thead id="execThead">
+                <tr>
+                  <th>Endpoint</th>
+                  <th>Status</th>
+                  <th>Tempo</th>
+                  <th>Tamanho</th>
+                  <th>Auth</th>
+                </tr>
+              </thead>
+              <tbody id="execTbody"></tbody>
+            </table>
+          </div>
         </div>
-        <div class="scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Endpoint</th>
-                <th>Status</th>
-                <th>Tempo</th>
-                <th>Tamanho</th>
-                <th>Auth</th>
-              </tr>
-            </thead>
-            <tbody id="execTbody"></tbody>
-          </table>
-        </div>
-      </div>
 
-      <div class="box">
-        <div class="box-head">
-          <h3>Registro de eventos</h3>
-          <span class="badge">Console</span>
+        <div class="box exec-panel">
+          <div class="box-head">
+            <h3>Registro de eventos</h3>
+            <span class="badge">Console</span>
+          </div>
+          <div class="log" id="log" aria-live="polite"></div>
         </div>
-        <div class="log" id="log" aria-live="polite"></div>
-      </div>
-
-      <div class="actions">
-        <button class="btn danger" id="cancelar" disabled>Cancelar varredura</button>
-        <button class="btn" id="verRel" disabled>Ver relatório completo</button>
       </div>
     </section>
 
     <!-- 4. RELATÓRIO -->
     <section id="relatorio">
-      <div class="section-head">
-        <span class="eyebrow">04 / DIAGNÓSTICO E SINAIS</span>
-        <h2>Relatório</h2>
-        <p class="sub" id="relSub">Nenhuma varredura realizada ainda.</p>
+      <div class="section-head section-head-row">
+        <div>
+          <span class="eyebrow">04 / DIAGNÓSTICO E SINAIS</span>
+          <div class="title-with-badge">
+            <h2>Relatório</h2>
+            <span class="pill hidden" id="relMethod">GET</span>
+          </div>
+          <p class="sub" id="relSub">Nenhuma varredura realizada ainda.</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn sec" id="exportar">Exportar relatório (.txt)</button>
+        </div>
       </div>
 
-      <div class="cards">
+      <div class="cards cards-6">
         <div class="card accent-cyan"><b id="cTotal">0</b><span>Endpoints analisados</span></div>
-        <div class="card accent-green"><b id="cOk">0</b><span>Com resposta</span></div>
-        <div class="card accent-red"><b id="cErr">0</b><span>Com erro ou timeout</span></div>
+        <div class="card accent-green"><b id="c2xx">0</b><span>Sucesso HTTP (2xx/3xx)</span></div>
+        <div class="card accent-amber"><b id="c4xx5xx">0</b><span>Bloqueios / Erros (4xx/5xx)</span></div>
+        <div class="card accent-red"><b id="cErr">0</b><span>Falhas de conexão</span></div>
         <div class="card accent-purple"><b id="cAvg">–</b><span>Tempo médio</span></div>
         <div class="card accent-amber"><b id="cAuth">0</b><span>Exigem autenticação</span></div>
       </div>
@@ -269,25 +305,35 @@ Content-Type: application/json</textarea>
             <label for="filtro">Filtrar resultados</label>
             <select id="filtro">
               <option value="todos">Todos os endpoints</option>
+              <option value="ok">Sucesso HTTP (2xx/3xx)</option>
               <option value="auth">Exigem autenticação</option>
-              <option value="erro">Com erro</option>
+              <option value="http_err">Bloqueios / Erros HTTP (4xx/5xx)</option>
+              <option value="erro">Falhas de conexão / Timeout</option>
               <option value="json">Com payload JSON</option>
             </select>
           </div>
-          <div class="toolbar-actions">
-            <button class="btn sec" id="exportar">Exportar relatório (.txt)</button>
+          <div class="toolbar-hint">
+            <details class="help-popover">
+              <summary>Como interpretar os sinais de autenticação?</summary>
+              <div class="help-body">
+                <p><strong>Status 401/403:</strong> O servidor recusou acesso anônimo ou proibiu a rota.</p>
+                <p><strong>Header WWW-Authenticate:</strong> A resposta exige explicitamente um esquema de credencial (Bearer, Basic, etc.).</p>
+                <p><strong>Palavra-chave no corpo:</strong> O conteúdo retornado menciona termos típicos de bloqueio (ex.: <code>unauthorized</code>, <code>token</code>, <code>login</code>).</p>
+              </div>
+            </details>
           </div>
         </div>
       </div>
 
-      <div class="two mt12">
-        <div class="scroll">
+      <div class="report-grid mt12">
+        <div class="scroll report-scroll">
           <table>
             <thead>
               <tr>
                 <th>Endpoint</th>
                 <th>Status</th>
                 <th>Tempo</th>
+                <th>Tamanho</th>
                 <th>Auth</th>
               </tr>
             </thead>
@@ -304,17 +350,19 @@ Content-Type: application/json</textarea>
 
     <!-- 5. HISTÓRICO -->
     <section id="historico">
-      <div class="section-head">
-        <span class="eyebrow">05 / ARQUIVO LOCAL</span>
-        <h2>Histórico</h2>
-        <p class="sub">Relatórios das suas varreduras guardados neste navegador (até 20 registros).</p>
+      <div class="section-head section-head-row">
+        <div>
+          <span class="eyebrow">05 / ARQUIVO LOCAL</span>
+          <h2>Histórico</h2>
+          <p class="sub">Relatórios das suas varreduras guardados neste navegador (até 20 registros).</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn danger" id="limparRel">Apagar todo o histórico</button>
+        </div>
       </div>
 
       <div class="box">
-        <ul class="plain" id="listaRel"></ul>
-        <div class="actions">
-          <button class="btn danger" id="limparRel">Apagar todo o histórico</button>
-        </div>
+        <ul class="plain history-list" id="listaRel"></ul>
       </div>
     </section>
 
@@ -326,7 +374,7 @@ Content-Type: application/json</textarea>
         <p class="sub">Gerencie a lista base utilizada nas varreduras e restaure snapshots anteriores.</p>
       </div>
 
-      <div class="two">
+      <div class="endpoints-grid">
         <div class="box">
           <div class="box-head">
             <h3>Lista atual (<span id="qtd">0</span>)</h3>
@@ -341,11 +389,11 @@ Content-Type: application/json</textarea>
             </div>
           </div>
           <p class="alert-msg" id="erroEp"></p>
-          <ul class="plain mt12" id="listaEp"></ul>
+          <ul class="plain list-scroll mt12" id="listaEp"></ul>
           <div class="actions">
-            <button class="btn sec" id="btnUp">Importar .txt</button>
-            <button class="btn sec" id="btnDown">Baixar (.txt)</button>
-            <button class="btn sec" id="btnPadrao">Restaurar padrão</button>
+            <button class="btn sec" id="btnUp">Importar arquivo .txt</button>
+            <button class="btn sec" id="btnDown">Baixar lista (.txt)</button>
+            <button class="btn sec" id="btnPadrao">Restaurar lista padrão</button>
             <input type="file" accept=".txt" id="fileEp" hidden>
           </div>
         </div>
@@ -355,7 +403,7 @@ Content-Type: application/json</textarea>
             <h3>Backups automáticos</h3>
             <span class="badge">Snapshots</span>
           </div>
-          <ul class="plain" id="listaBk"></ul>
+          <ul class="plain list-scroll" id="listaBk"></ul>
           <p class="hint mt12">Restaurar substitui a lista atual após criar um novo backup de segurança. Mantemos os 20 snapshots mais recentes neste navegador.</p>
         </div>
       </div>
@@ -363,7 +411,7 @@ Content-Type: application/json</textarea>
   </main>
 </div>
 
-<div class="toast" id="toast" role="status"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="script.js"></script>
 </body>

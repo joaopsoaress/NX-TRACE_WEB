@@ -1,3 +1,8 @@
+/* ==========================================================================
+   NX-TRACE — Adaptive Cyber Telemetry Design System
+   Heurísticas de Nielsen aplicadas · Portabilidade multi-dispositivo · CSP estrita
+   ========================================================================== */
+
 :root {
   --bg: #0b0f17;
   --bg-elevated: #111827;
@@ -27,6 +32,8 @@
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Consolas, monospace;
 
+  --banner-h: 36px;
+  --nav-w: 244px;
   --radius: 8px;
   --radius-sm: 5px;
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
@@ -53,15 +60,31 @@ code {
   border-radius: 4px;
 }
 
+.hidden {
+  display: none !important;
+}
 
+.is-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Banner Superior Fixo
+   ========================================================================== */
 .banner {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  min-height: var(--banner-h);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  background: #070a10;
+  background: rgba(7, 10, 16, 0.94);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
-  padding: 7px 20px;
+  padding: 6px 20px;
   font-family: var(--font-mono);
   font-size: 11.5px;
   letter-spacing: 0.04em;
@@ -82,38 +105,54 @@ code {
   background: var(--ok);
   box-shadow: 0 0 8px var(--ok);
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .pill {
   background: var(--accent-soft);
   color: var(--accent);
   border: 1px solid var(--accent-border);
-  padding: 1px 7px;
+  padding: 1px 8px;
   border-radius: 99px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
+.pill-sm {
+  font-size: 11px;
+  padding: 1px 6px;
+  margin-right: 6px;
+}
 
+/* ==========================================================================
+   Layout Global & Sidebar Sticky
+   ========================================================================== */
 .layout {
   display: flex;
-  min-height: calc(100vh - 34px);
+  min-height: calc(100vh - var(--banner-h));
 }
 
 nav {
-  width: 248px;
+  position: sticky;
+  top: var(--banner-h);
+  height: calc(100vh - var(--banner-h));
+  width: var(--nav-w);
   background: var(--bg-elevated);
   border-right: 1px solid var(--line);
   padding: 20px 12px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  overflow-y: auto;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 4px 10px 20px;
+  padding: 4px 10px 18px;
   margin-bottom: 12px;
   border-bottom: 1px solid var(--line);
 }
@@ -161,11 +200,12 @@ nav button {
   align-items: center;
   gap: 10px;
   width: 100%;
+  min-height: 40px;
   text-align: left;
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 9px 12px;
   font: inherit;
   font-size: 14px;
   cursor: pointer;
@@ -210,11 +250,16 @@ nav button.active svg {
   color: var(--dim);
 }
 
-
+/* ==========================================================================
+   Área Principal Fluida
+   ========================================================================== */
 main {
   flex: 1;
-  padding: 28px 32px 48px;
-  max-width: 1080px;
+  min-width: 0;
+  width: 100%;
+  max-width: 1720px;
+  margin: 0 auto;
+  padding: clamp(18px, 2.2vw, 30px) clamp(16px, 2.8vw, 38px) 48px;
 }
 
 section {
@@ -232,7 +277,27 @@ section.active {
 }
 
 .section-head {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
+}
+
+.section-head-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.head-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .eyebrow {
@@ -247,7 +312,7 @@ section.active {
 
 h2 {
   margin: 0 0 4px;
-  font-size: 24px;
+  font-size: clamp(20px, 1.8vw, 25px);
   font-weight: 700;
   color: var(--text-bright);
   letter-spacing: -0.01em;
@@ -259,12 +324,14 @@ h2 {
   font-size: 14.5px;
 }
 
-
+/* ==========================================================================
+   Painéis (.box) & Grids Adaptativos
+   ========================================================================== */
 .box {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 20px;
+  padding: clamp(16px, 1.6vw, 22px);
   margin-bottom: 18px;
   box-shadow: var(--shadow);
 }
@@ -296,13 +363,84 @@ h2 {
   color: var(--accent);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .badge.optional {
   color: var(--muted);
 }
 
+.scan-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
 
+.scan-col > .box:last-child {
+  margin-bottom: 0;
+}
+
+.exec-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(340px, 1fr);
+  gap: 20px;
+  align-items: stretch;
+}
+
+.exec-panel {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0;
+}
+
+.exec-scroll {
+  height: clamp(320px, calc(100vh - 310px), 680px);
+  overflow: auto;
+}
+
+.report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(380px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.report-scroll {
+  max-height: calc(100vh - 260px);
+  min-height: 300px;
+  overflow: auto;
+}
+
+#detalhe {
+  position: sticky;
+  top: calc(var(--banner-h) + 16px);
+  max-height: calc(100vh - var(--banner-h) - 32px);
+  overflow: auto;
+  margin-bottom: 0;
+}
+
+.endpoints-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.list-scroll {
+  max-height: clamp(260px, calc(100vh - 340px), 640px);
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.tall-scroll {
+  max-height: calc(100vh - 250px);
+  overflow: auto;
+}
+
+/* ==========================================================================
+   Formulários, Inputs & Opções
+   ========================================================================== */
 label {
   display: block;
   margin: 12px 0 6px;
@@ -332,11 +470,17 @@ label.inline {
   display: flex !important;
   width: 100%;
   margin: 0 !important;
-  padding: 9px 12px;
+  padding: 10px 12px;
   background: var(--panel-alt);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.option-card-split {
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 
 .option-card:hover,
@@ -345,11 +489,45 @@ label.inline {
   background: #121a29;
 }
 
+.file-zone {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--panel-alt);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+
+.wl-preview {
+  padding: 10px 12px;
+  background: #070a10;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.wl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.wl-chip {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--accent-hover);
+}
+
 input[type="radio"],
 input[type="checkbox"] {
   accent-color: var(--accent);
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
   cursor: pointer;
 }
 
@@ -383,14 +561,17 @@ textarea {
   font-family: var(--font-mono);
   font-size: 13px;
   line-height: 1.5;
-  min-height: 82px;
+  min-height: 92px;
   resize: vertical;
+}
+
+textarea.hdr-area {
+  min-height: 132px;
 }
 
 input[type="file"] {
   display: block;
   width: 100%;
-  margin-top: 10px;
   font-size: 13px;
   color: var(--muted);
 }
@@ -400,7 +581,7 @@ input[type="file"]::file-selector-button {
   margin-right: 10px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
-  background: var(--panel-alt);
+  background: var(--panel);
   color: var(--text);
   font: inherit;
   font-size: 12.5px;
@@ -435,7 +616,7 @@ input[type="file"]::file-selector-button:hover {
 }
 
 .alert-msg {
-  margin: 8px 0;
+  margin: 10px 0 0;
   padding: 10px 14px;
   border-radius: var(--radius-sm);
   background: var(--err-soft);
@@ -448,7 +629,9 @@ input[type="file"]::file-selector-button:hover {
   display: none;
 }
 
-
+/* ==========================================================================
+   Botões
+   ========================================================================== */
 .row {
   display: flex;
   gap: 12px;
@@ -457,11 +640,12 @@ input[type="file"]::file-selector-button:hover {
 
 .row > div {
   flex: 1;
-  min-width: 180px;
+  min-width: 160px;
 }
 
 button.btn {
   padding: 9px 18px;
+  min-height: 38px;
   border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
   background: var(--accent);
@@ -499,13 +683,21 @@ button.btn.sec:hover:not(:disabled) {
   color: var(--accent-hover);
 }
 
-button.btn.danger {
+button.btn.btn-xs {
+  padding: 4px 10px;
+  min-height: 28px;
+  font-size: 12px;
+}
+
+button.btn.danger,
+button.btn.confirm-armed {
   background: var(--err-soft);
-  border-color: rgba(244, 63, 94, 0.45);
+  border-color: rgba(244, 63, 94, 0.55);
   color: #fda4af;
 }
 
-button.btn.danger:hover:not(:disabled) {
+button.btn.danger:hover:not(:disabled),
+button.btn.confirm-armed:hover:not(:disabled) {
   background: var(--err);
   border-color: var(--err);
   color: #fff;
@@ -526,7 +718,13 @@ button.btn:disabled {
   flex-wrap: wrap;
 }
 
+.align-center {
+  align-items: center;
+}
 
+/* ==========================================================================
+   Tabelas, Badges de Status & Tags
+   ========================================================================== */
 .scroll {
   overflow-x: auto;
   border: 1px solid var(--line);
@@ -543,11 +741,14 @@ table {
 th,
 td {
   text-align: left;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--line);
 }
 
 th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   background: #0d131f;
   color: var(--muted);
   font-family: var(--font-mono);
@@ -565,6 +766,7 @@ td:first-child {
   font-family: var(--font-mono);
   color: var(--text-bright);
   font-size: 13px;
+  word-break: break-all;
 }
 
 tbody tr:last-child td {
@@ -590,7 +792,35 @@ tbody tr.sel td:first-child {
 }
 
 .col-check {
-  width: 48px;
+  width: 52px;
+}
+
+.st-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+}
+
+.st-ok {
+  background: var(--ok-soft);
+  color: #6ee7b7;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.st-warn {
+  background: var(--warn-soft);
+  color: #fcd34d;
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.st-err {
+  background: var(--err-soft);
+  color: #fda4af;
+  border-color: rgba(244, 63, 94, 0.4);
 }
 
 .tag {
@@ -616,6 +846,12 @@ tbody tr.sel td:first-child {
   border-color: var(--line);
 }
 
+/* ==========================================================================
+   Progresso & Terminal Log
+   ========================================================================== */
+.prog-box {
+  padding: 16px 20px;
+}
 
 .prog-header {
   display: flex;
@@ -651,22 +887,29 @@ tbody tr.sel td:first-child {
 }
 
 .log {
+  flex: 1;
   background: #070a10;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   padding: 12px 14px;
-  height: 170px;
+  height: clamp(320px, calc(100vh - 310px), 680px);
   overflow: auto;
-  font: 12.5px/1.6 var(--font-mono);
+  font: 12.5px/1.65 var(--font-mono);
   color: #a5f3fc;
 }
 
-
+/* ==========================================================================
+   Cards de Métricas, Ajuda Contextual & Inspetor JSON
+   ========================================================================== */
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
   margin-bottom: 18px;
+}
+
+.cards-6 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
 }
 
 .card {
@@ -687,7 +930,7 @@ tbody tr.sel td:first-child {
 .card b {
   display: block;
   font-family: var(--font-mono);
-  font-size: 24px;
+  font-size: clamp(20px, 1.8vw, 25px);
   font-weight: 700;
   color: var(--text-bright);
   font-variant-numeric: tabular-nums;
@@ -703,9 +946,40 @@ tbody tr.sel td:first-child {
   padding: 14px 18px;
 }
 
-.toolbar-actions {
+.toolbar-box label {
+  margin-top: 0;
+}
+
+.toolbar-hint {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+}
+
+.help-popover {
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--panel-alt);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+}
+
+.help-popover summary {
+  cursor: pointer;
+  color: var(--accent-hover);
+  font-weight: 500;
+}
+
+.help-body {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  line-height: 1.5;
+}
+
+.help-body p {
+  margin: 4px 0;
 }
 
 pre {
@@ -716,13 +990,16 @@ pre {
   overflow: auto;
   font-family: var(--font-mono);
   font-size: 12.5px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: #cbd5e1;
   margin: 8px 0 0;
-  max-height: 300px;
+  min-height: 180px;
+  max-height: calc(100vh - 330px);
 }
 
-
+/* ==========================================================================
+   Listas (Endpoints, Backups, Histórico) & Toast com Desfazer
+   ========================================================================== */
 ul.plain {
   list-style: none;
   padding: 0;
@@ -735,12 +1012,12 @@ ul.plain li {
   align-items: center;
   padding: 10px 8px;
   border-bottom: 1px solid var(--line);
-  gap: 10px;
+  gap: 12px;
   transition: background 0.12s ease;
 }
 
 ul.plain li:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.025);
 }
 
 ul.plain li:last-child {
@@ -751,6 +1028,7 @@ ul.plain li > span:first-child {
   font-family: var(--font-mono);
   font-size: 13px;
   color: var(--text-bright);
+  word-break: break-all;
 }
 
 ul.plain li .info {
@@ -775,10 +1053,12 @@ ul.plain li .btns {
   gap: 6px;
   flex-wrap: wrap;
   justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 ul.plain li .btn.sec {
-  padding: 5px 10px;
+  padding: 5px 11px;
+  min-height: 32px;
   font-size: 12.5px;
 }
 
@@ -795,30 +1075,85 @@ ul.plain li .btn.sec {
   font-size: 13.5px;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
   display: none;
-  max-width: 360px;
+  align-items: center;
+  gap: 12px;
+  max-width: 420px;
   z-index: 100;
 }
 
-
-.two {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  align-items: start;
+.toast.show {
+  display: flex;
 }
 
-#detalhe {
-  position: sticky;
-  top: 18px;
-  max-height: calc(100vh - 36px);
-  overflow: auto;
+.toast-undo {
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  color: var(--accent-hover);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
 }
 
+.toast-undo:hover {
+  background: var(--accent);
+  color: #06101d;
+}
+
+/* ==========================================================================
+   Utilitários
+   ========================================================================== */
 .w3 { flex: 3; }
-.w240 { max-width: 260px; }
+.w240 { max-width: 280px; }
 .mt12 { margin-top: 12px; }
+.m0 { margin: 0 !important; }
+.flex1 { flex: 1; }
 .row.end { align-items: end; }
 
+/* ==========================================================================
+   Portabilidade & Breakpoints Responsivos
+   ========================================================================== */
+@media (max-width: 1280px) {
+  .cards-6 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1140px) {
+  .scan-grid,
+  .exec-grid,
+  .report-grid,
+  .endpoints-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .exec-scroll,
+  .log {
+    height: 300px;
+  }
+
+  .report-scroll,
+  .list-scroll,
+  .tall-scroll {
+    max-height: none;
+  }
+
+  #detalhe {
+    position: static;
+    max-height: none;
+  }
+
+  pre {
+    max-height: 340px;
+  }
+
+  .toolbar-hint {
+    justify-content: flex-start;
+  }
+}
 
 @media (max-width: 840px) {
   .banner-note {
@@ -830,7 +1165,11 @@ ul.plain li .btn.sec {
   }
 
   nav {
+    position: sticky;
+    top: var(--banner-h);
+    z-index: 30;
     width: 100%;
+    height: auto;
     flex-direction: row;
     align-items: center;
     overflow-x: auto;
@@ -852,18 +1191,37 @@ ul.plain li .btn.sec {
   nav button {
     white-space: nowrap;
     padding: 8px 12px;
+    width: auto;
+  }
+}
+
+@media (max-width: 580px) {
+  .cards-6 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  main {
-    padding: 20px 16px 36px;
+  .banner {
+    padding: 6px 12px;
+    font-size: 10.5px;
   }
 
-  .two {
-    grid-template-columns: 1fr;
+  .head-actions,
+  .head-actions .btn,
+  .actions .btn {
+    width: 100%;
   }
 
-  #detalhe {
-    position: static;
-    max-height: none;
+  .w240 {
+    max-width: 100%;
+  }
+
+  ul.plain li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  ul.plain li .btns {
+    width: 100%;
+    justify-content: flex-start;
   }
 }
