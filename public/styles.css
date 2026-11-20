@@ -237,10 +237,16 @@ nav button.active svg {
   opacity: 1;
 }
 
-.nav-footer {
+.nav-help {
   margin-top: auto;
-  padding: 14px 10px 0;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
+  margin-bottom: 10px;
+}
+
+.nav-footer {
+  padding: 0 10px;
+  margin: 0;
 }
 
 .nav-footer p {
@@ -249,7 +255,6 @@ nav button.active svg {
   line-height: 1.45;
   color: var(--dim);
 }
-
 /* ==========================================================================
    Área Principal Fluida
    ========================================================================== */
