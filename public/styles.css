@@ -1263,6 +1263,13 @@ ul.plain li .btn.sec {
     padding: 8px 12px;
     width: auto;
   }
+  .nav-help {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    display: flex;
+    align-items: center;
+  }
 }
 
 @media (max-width: 580px) {
@@ -1294,4 +1301,70 @@ ul.plain li .btn.sec {
     width: 100%;
     justify-content: flex-start;
   }
+/* ==========================================================================
+   Seção de Ajuda
+   ========================================================================== */
+   #ajuda .box {
+     margin-bottom: 16px;
+   }
+   
+   #ajuda .box h3 {
+     margin-bottom: 12px;
+     padding-bottom: 10px;
+     border-bottom: 1px solid var(--line);
+   }
+   
+   #ajuda .box p {
+     margin: 8px 0;
+     color: var(--text);
+     line-height: 1.6;
+   }
+   
+   #ajuda .box p strong {
+     color: var(--text-bright);
+   }
+   
+   #ajuda .box[id] {
+     scroll-margin-top: calc(var(--banner-h) + 16px);
+   }
+   
+   .help-toc {
+     list-style: none;
+     padding: 0;
+     margin: 0;
+     display: grid;
+     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+     gap: 8px;
+   }
+   
+   .help-toc a {
+     display: block;
+     padding: 9px 12px;
+     background: var(--panel-alt);
+     border: 1px solid var(--line);
+     border-radius: var(--radius-sm);
+     color: var(--accent-hover);
+     text-decoration: none;
+     font-size: 13.5px;
+     font-weight: 500;
+     transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+   }
+   
+   .help-toc a:hover,
+   .help-toc a:focus-visible {
+     border-color: var(--accent-border);
+     background: var(--accent-soft);
+     color: var(--accent);
+     outline: none;
+   }
+   
+   .help-list {
+     padding-left: 20px;
+     margin: 8px 0 0;
+   }
+   
+   .help-list li {
+     margin: 6px 0;
+     line-height: 1.55;
+   }
 }
