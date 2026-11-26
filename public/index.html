@@ -64,6 +64,21 @@
       </button>
     </div>
 
+    <div class="nav-help">
+      <button data-go="ajuda">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"></circle>
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
+        <span>Ajuda</span>
+      </button>
+    </div>
+
+    <div class="nav-footer">
+      <p>Saída via proxy serverless de análise. Listas e relatórios ficam armazenados localmente neste navegador.</p>
+    </div>
+    
     <div class="nav-footer">
       <p>Saída via proxy serverless de análise. Listas e relatórios ficam armazenados localmente neste navegador.</p>
     </div>
@@ -407,6 +422,102 @@ Content-Type: application/json</textarea>
         </div>
       </div>
     </section>
+
+    <!-- 7. AJUDA -->
+    <section id="ajuda">
+      <div class="section-head">
+        <span class="eyebrow">07 / DOCUMENTAÇÃO DE USO</span>
+        <h2>Ajuda</h2>
+        <p class="sub">Guia rápido para cada etapa do NX-TRACE. Clique em um item abaixo para ir direto ao tópico.</p>
+      </div>
+
+      <div class="box">
+        <div class="box-head">
+          <h3>Índice rápido</h3>
+          <span class="badge">Navegação</span>
+        </div>
+        <ul class="help-toc">
+          <li><a href="#ajuda-geral">Visão geral</a></li>
+          <li><a href="#ajuda-nova">1. Nova varredura</a></li>
+          <li><a href="#ajuda-revisao">2. Revisão da descoberta</a></li>
+          <li><a href="#ajuda-execucao">3. Execução</a></li>
+          <li><a href="#ajuda-relatorio">4. Relatório</a></li>
+          <li><a href="#ajuda-historico">5. Histórico</a></li>
+          <li><a href="#ajuda-endpoints">6. Endpoints e backups</a></li>
+          <li><a href="#ajuda-seguranca">Segurança e autorização</a></li>
+        </ul>
+      </div>
+
+      <div class="box" id="ajuda-geral">
+        <h3>Visão geral</h3>
+        <p>O <strong>NX-TRACE</strong> é uma ferramenta de <em>observabilidade passiva</em> de endpoints HTTP. Ele dispara requisições (GET, HEAD ou OPTIONS) contra uma lista de rotas de um alvo autorizado e registra status HTTP, tempo de resposta, tamanho do corpo e sinais de autenticação.</p>
+        <p><strong>O que ele NÃO faz:</strong> não explora falhas, não executa força bruta, não contorna mecanismos de autenticação e não modifica o alvo.</p>
+        <p><strong>Onde os dados ficam:</strong> o tráfego de rede é feito por um proxy serverless; listas, relatórios e backups ficam salvos apenas no seu navegador (localStorage). Limpar os dados do navegador remove tudo.</p>
+      </div>
+
+      <div class="box" id="ajuda-nova">
+        <h3>1. Nova varredura</h3>
+        <p><strong>URL base:</strong> comece com <code>http://</code> ou <code>https://</code>. Endereços locais e de rede privada (<code>localhost</code>, <code>127.x</code>, <code>10.x</code>, <code>192.168.x</code>…) são bloqueados automaticamente pelo servidor de varredura.</p>
+        <p><strong>Método HTTP:</strong> escolha entre GET, HEAD ou OPTIONS.</p>
+        <p><strong>Headers:</strong> um por linha, no formato <code>Nome: valor</code>. Tokens de leitura trafegam pelo proxy até o alvo e ficam salvos apenas neste navegador.</p>
+        <p><strong>Endpoints:</strong> escolha entre a <em>lista salva</em> (padrão) ou importar um <code>.txt</code> com um endpoint por linha, começando com <code>/</code> (máx. 100 KB).</p>
+        <p><strong>Descoberta por wordlist (opcional):</strong> testa cada termo em 6 variações de caminho (<code>/termo</code>, <code>/termo/</code>, <code>/api/termo</code>, <code>/v1/termo</code>, etc.) e leva os achados à tela de revisão antes de alterar a lista salva. Você pode ver as palavras da wordlist padrão antes de executar.</p>
+        <p><strong>Autorização:</strong> a caixa de confirmação é obrigatória e habilita o botão <em>Iniciar varredura</em>.</p>
+      </div>
+
+      <div class="box" id="ajuda-revisao">
+        <h3>2. Revisão da descoberta</h3>
+        <p>Aparece somente quando a opção <em>Descobrir novos endpoints</em> foi marcada. Lista cada endpoint encontrado com status, tipo de conteúdo e indicação de já existir na lista.</p>
+        <p>Marque os itens que deseja adicionar e clique em <strong>Adicionar selecionados e continuar</strong>. Antes da alteração, um <strong>backup automático</strong> da lista anterior é criado. Se preferir manter a lista como está, use <strong>Continuar sem adicionar</strong>.</p>
+        <p>Endpoints marcados como <em>Já está na lista</em> não podem ser selecionados novamente.</p>
+      </div>
+
+      <div class="box" id="ajuda-execucao">
+        <h3>3. Execução</h3>
+        <p>Mostra o <strong>progresso em tempo real</strong>, as respostas capturadas e o log de eventos. Cada linha da tabela corresponde a uma requisição, com status HTTP, tempo, tamanho e indicação de autenticação.</p>
+        <p><strong>Cancelar varredura:</strong> abre um diálogo de confirmação. Ao confirmar, a operação é interrompida — os resultados já capturados são mantidos e ficam disponíveis no relatório.</p>
+        <p><strong>Ver relatório completo:</strong> habilita após o término (ou cancelamento) e leva à tela de relatório.</p>
+        <p><strong>Falhas de conexão:</strong> são registradas individualmente e <em>não interrompem</em> a varredura dos demais endpoints.</p>
+      </div>
+
+      <div class="box" id="ajuda-relatorio">
+        <h3>4. Relatório</h3>
+        <p>Resume a varredura em seis cartões: total analisado, sucesso HTTP (2xx/3xx), bloqueios/erros (4xx/5xx), falhas de conexão, tempo médio e endpoints que exigem autenticação.</p>
+        <p><strong>Filtros:</strong> use o seletor para isolar sucesso, endpoints com autenticação, erros HTTP, falhas de conexão ou respostas com payload JSON.</p>
+        <p><strong>Detalhe do endpoint:</strong> clique em qualquer linha da tabela para ver os sinais de autenticação e o corpo JSON completo (quando houver).</p>
+        <p><strong>Sinais de autenticação:</strong> status 401/403, presença do cabeçalho <code>WWW-Authenticate</code> e palavras-chave no corpo (ex.: <code>unauthorized</code>, <code>token</code>, <code>login</code>).</p>
+        <p><strong>Exportar relatório (.txt):</strong> gera um arquivo texto com o resumo completo e dispara o download.</p>
+      </div>
+
+      <div class="box" id="ajuda-historico">
+        <h3>5. Histórico</h3>
+        <p>Guarda até <strong>20 relatórios</strong> neste navegador. Cada registro mostra método, alvo, data, total de endpoints e quantos exigem autenticação.</p>
+        <p><strong>Abrir:</strong> recarrega o relatório na tela principal. <strong>Baixar .txt:</strong> reexporta o relatório preservando a data original da varredura. <strong>Excluir:</strong> remove o registro (mediante confirmação em dois cliques).</p>
+        <p><strong>Apagar todo o histórico:</strong> remove todos os relatórios salvos. A ação exige confirmação em dois cliques (o botão muda para "Confirmar limpeza do histórico?").</p>
+      </div>
+
+      <div class="box" id="ajuda-endpoints">
+        <h3>6. Endpoints e backups</h3>
+        <p><strong>Lista atual:</strong> base usada nas varreduras. Adicione manualmente (deve começar com <code>/</code>, sem espaços, até 200 caracteres), importe de <code>.txt</code> ou baixe a lista em arquivo.</p>
+        <p><strong>Backups automáticos:</strong> toda alteração (manual, importação ou restauração) gera um snapshot datado com motivo. São mantidos os <strong>20 snapshots mais recentes</strong>.</p>
+        <p><strong>Restaurar backup:</strong> substitui a lista atual <em>após</em> criar um novo backup de segurança do estado anterior. Nunca há perda irreversível.</p>
+        <p><strong>Desfazer:</strong> após qualquer alteração, o toast exibe um botão <em>Desfazer</em> por alguns segundos. Também é possível restaurar backups manualmente pelo painel à direita.</p>
+        <p><strong>Restaurar lista padrão:</strong> redefine a lista base para o conjunto original da ferramenta (exige confirmação em dois cliques).</p>
+      </div>
+
+      <div class="box" id="ajuda-seguranca">
+        <h3>Segurança e autorização</h3>
+        <ul class="help-list">
+          <li>Use apenas em alvos pelos quais você é <strong>responsável</strong> ou tem <strong>autorização explícita</strong> para analisar.</li>
+          <li>Endereços locais e de rede privada são bloqueados automaticamente pelo servidor de origem da varredura.</li>
+          <li>A ferramenta apenas <em>observa</em> respostas HTTP — não explora, não altera e não contorna controles de acesso.</li>
+          <li>Headers (incluindo tokens de leitura) trafegam pelo proxy serverless até o alvo e ficam salvos apenas neste navegador.</li>
+          <li>Relatórios, listas e backups são armazenados localmente (localStorage). Limpar os dados do navegador remove tudo definitivamente.</li>
+          <li>Se você desconfia de um vazamento de credencial usada em headers, revogue o token junto ao serviço de origem imediatamente.</li>
+        </ul>
+      </div>
+    </section>
+    
   </main>
 </div>
 
