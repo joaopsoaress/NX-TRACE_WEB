@@ -1340,13 +1340,16 @@ ul.plain li .btn.sec {
   padding-bottom: 8px;
 }
 
+/* ==========================================================================
+   Índice Rápido (Estilo Botões)
+   ========================================================================== */
 .help-toc {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 10px; /* Espaçamento idêntico ao .actions e .head-actions */
   align-items: center;
 }
 
@@ -1355,37 +1358,29 @@ ul.plain li .btn.sec {
   margin: 0;
 }
 
+/* Aplica o estilo do botão secundário (.btn.sec) aos links */
 .help-toc a {
   display: inline-flex;
   align-items: center;
-  padding: 6px 12px;
+  justify-content: center;
+  padding: 9px 18px;
+  min-height: 38px; /* Mesma altura dos botões normais */
   background: var(--panel-alt);
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  color: var(--accent-hover);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm); /* 5px, igual aos botões */
+  color: var(--text);
   text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-family: var(--font-sans); /* Fonte normal, não mono */
+  font-size: 13.5px;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
+/* Hover idêntico ao .btn.sec:hover */
 .help-toc a:hover,
 .help-toc a:focus-visible {
-  border-color: var(--accent-border);
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: #1b263b;
+  border-color: var(--accent);
+  color: var(--accent-hover);
   outline: none;
-}
-
-.help-list {
-  padding-left: 20px;
-  margin: 8px 0 0;
-}
-
-.help-list li {
-  margin: 6px 0;
-  line-height: 1.55;
 }
